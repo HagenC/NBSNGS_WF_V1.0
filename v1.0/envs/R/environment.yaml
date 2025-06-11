@@ -1,0 +1,23 @@
+name: R_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - conda-forge::r-base=4.4*
+  - conda-forge::pandoc=3.2.1
+  - r-data.table
+  - r-dplyr
+  - r-tidyr
+  - r-stringr
+  - r-stringi
+  - r-magrittr
+  - r-dbi
+  - r-rsqlite
+  - r-randomforest
+  - zlib                   
+  - r-r.utils
+  - bioconda::haplogrep=2.4.0
+  - r-rmarkdown
+  - r-knitr
+  - r-dt

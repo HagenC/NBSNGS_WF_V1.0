@@ -1,0 +1,243 @@
+---
+#title: "NBS-NGS Report"
+#author: "UNC"
+#date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+    html_document 
+header-includes:
+  - \usepackage{xcolor}
+  
+params:
+    sampleID: ;
+    flowcellID: ;
+    phenotype: ;
+    screenedGenes: ;
+    targetVoisAF: ;
+    targetVariation: ;
+    targetVoisPopulationAF: ;
+    geneExonCov: ;
+    CPR: ;
+    covClinvarPathogenic: ;
+    founderCovTargets: ;
+    Sex: ;
+    mtDNA: ;
+    ancestry: ;
+    OBS: ;
+    Version: ;
+
+
+title: "`r params$sampleID`"  
+date: "`r format(Sys.time(), '%B %d, %Y')`" 
+
+---
+<style type="text/css">
+
+h1.title {
+  font-size: 38px;
+  color: Black;
+  text-align: center;
+}
+h2.subtitle {
+    font-size: 18px;
+    color: gray;
+    text-align: center;
+  }
+h4.date {
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: Black;
+  text-align: center;
+}
+</style>
+
+
+
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+# if (!require(data.table)) install.packages('data.table')
+# library(data.table)
+# #if (!require(tidyverse)) install.packages('tidyverse')
+ #library(tidyverse)
+# library(dplyr)
+# library(magrittr)
+# if (!require(knitr)) install.packages('knitr')
+# library(knitr)
+# if (!require(kableExtra)) install.packages('kableExtra')
+# library(kableExtra)
+
+```
+<br/>
+
+&nbsp;  
+
+##### **WF version** : `r params$Version `  
+##### **Sample ID** : `r params$sampleID `  
+##### **Sample Flowcell** : `r params$flowcellID ` 
+##### **Sample Phenotype** : `r params$phenotype ` 
+##### **Genes screened** : `r params$screenedGenes ` 
+##### **Sex prediction** : `r params$Sex `
+##### **mtDNA prediction** : `r params$mtDNA `
+##### **Ancestry prediction** : `r params$ancestry `
+##### **Alt** : `r params$OBS `
+
+
+<br/>
+
+<center> <font size="4"> **Variant(s) Of Interest** </font> </center>
+
+<br/>
+
+```{r VOIs, echo=F}
+#clinvar.date <- system(paste0("zcat ",clinvar," | awk 'NR==2'"), intern=TRUE)
+variantsOI<- params$targetVoisAF 
+
+DT::datatable(variantsOI, rownames = FALSE, options = list(scrollX = TRUE,
+  dom = 'Bfrtip', 
+  buttons = c('copy', 'csv', 'excel', 'print') 
+)) %>% DT::formatStyle(columns = colnames(variantsOI), fontSize = '90%')
+
+
+```
+<div style="font-size: 80%;">
+`VARID` = #CHROM-POS-REF-ALT<br>
+`RS` = dbSNP rsid from ClinVar<br>
+`AF` = Allele Frequency (HaplotypeCaller)<br>
+`SB` = Strand Bias (Lofreq)<br>
+`DP4` = Fref, Rref, Falt, Ralt (Lofreq)<br>
+`GENE` = SnpEff predicted gene name<br>
+`HGVS_C` = SnpEff (GRCh38.113) predicted HGVS DNA level<br>
+`HGVS_P` = SnpEff (GRCh38.113)predicted HGVS protein level<br>
+`EFFECT` = SnpEff (GRCh38.113)predicted Sequence ontology<br>
+`CLNSIG` = Clinical(var) significance for this single variant<br>
+`AF_nfe` = Allele Frequency in gnomAD NFE (gnomad.v4.1)<br>
+`NBSNGS_AF` = Allele frequency in NBS.NGS samples (including target sample)<br>
+`LOFREQ.supported` = LOFEQ supported call<br>
+`Sample.ID` = Sample Barcode _ Flowcell<br>
+</div>
+
+<br/>
+
+<center> <font size="4"> **Targeted region variation** </font> </center>
+
+<br/>
+
+```{r Variation, echo=F}
+#variants <- fread(VARIATION.sample.target.X) %>% select(Variant.ID, RS, AF,  SnpEff.GENE, SnpEff.EFFECT, SnpEff.HGVS_C, SnpEff.HGVS_P, CLNSIG, AF_nfe) %>%rowwise() %>%  mutate(AF = #ifelse(is.numeric(AF), round(AF, digits = 4), AF))
+variants <- params$targetVariation
+DT::datatable(variants, rownames = FALSE, options = list(scrollX = TRUE,
+  dom = 'Bfrtip', 
+  buttons = c('copy', 'csv', 'excel', 'print') 
+)) %>% DT::formatStyle(columns = colnames(variants), fontSize = '90%')
+
+```
+<div style="font-size: 80%;">
+`VARID` = #CHROM-POS-REF-ALT<br>
+`RSID` = dbSNP rsid from SnpEff<br>
+`AF` = Allele Frequency<br>
+`AF_nfe` = Allele Frequency in gnomAD NFE (gnomad.v4.1)<br>
+`GENE` = SnpEff (GRCh38.113) predicted gene name<br>
+`HGVS_C` = SnpEff (GRCh38.113) predicted HGVS DNA level<br>
+`HGVS_P` = SnpEff (GRCh38.113) predicted HGVS protein level<br>
+`EFFECT` = SnpEff (GRCh38.113) predicted Sequence ontology<br>
+`CLNSIG` = Clinical(var) significance for this single variant <br>
+</div>
+<br/>
+
+
+<center> <font size="4"> **Population VOI Phenotype-Genotype count** </font> </center>
+<br/>
+
+```{r FRQ, echo=F}
+FREQ <- params$targetVoisPopulationAF  #%>% rename(Variant.ID = var.ID, Phenotype = Disease)
+
+DT::datatable(FREQ, rownames = FALSE, filter = 'top', editable = TRUE, extensions = 'Buttons', options = list(scrollX = TRUE,
+  dom = 'Bfrtip', 
+  buttons = c('copy', 'csv', 'excel',  'print') 
+)) %>% DT::formatStyle(columns = colnames(FREQ), fontSize = '90%')
+
+```
+<div style="font-size: 80%;">
+`VARID` = #CHROM-POS<br>
+`GENE` = Gened ID<br>
+`Phenotype` = Phenotype specific group<br>
+`Heterozygote` = number of heterozygotes in NBSNGS population<br>
+`Homozygote` = number of heterozygotes in NBSNGS population<br>
+`PASSED.alleles` = number of PASSED alleles (min. coverage 10)in phenotype group<br>
+`PASSED.alleles` = number of FAILED alleles (min. coverage 10)in phenotype group<br>
+`Phenotype_NBSNGS_AF` = Allele Frequency in phenotype group<br>
+</div>
+<br/>
+
+<center> <font size="4"> ** SSI focus VOIs** </font> </center>
+<br/>
+```{r SSI-VOI, echo=F, eval=TRUE}
+SSI.VOI <- params$founderCovTargets 
+DT::datatable(SSI.VOI, rownames = FALSE, filter = 'top', editable = TRUE, extensions = 'Buttons', options = list(scrollX = TRUE,
+  dom = 'Bfrtip', 
+  buttons = c('copy', 'csv', 'excel', 'print') 
+)) %>% DT::formatStyle(columns = colnames(SSI.VOI), fontSize = '90%')
+ 
+```
+<div style="font-size: 80%;">
+`INFO` = IN-house annotation <br>
+`GENE` = Gene ID<br>
+`VARID` = #CHROM-POS-REF-ALT<br>
+`AF` = Allele Frequency (HaplotypeCaller)<br>
+`DP4` = Fref, Rref, Falt, Ralt (Lofreq)<br>
+`DP` = Observed DP (MAPQ18)<br>
+
+</div>
+<br/>
+
+
+
+</div>
+<br/>
+
+<center> <font size="4"> **Coverage: targeted regions** </font> </center>
+<br/>
+
+```{r coverage, echo=F, eval=TRUE}
+coverage <- params$geneExonCov %>% arrange(GENE, Exon)#%>%  mutate(meanCov = round(meanCov, digits = 1))
+#failed.coverage <-  which(coverage$Percent.covered.min.cutoff < 90 )
+#missing.coverage <- which(coverage$Percent.covered.min.cutoff < 100 & coverage$Percent.covered.min.cutoff > 90)
+
+DT::datatable(coverage, rownames = FALSE, filter = 'top', editable = TRUE, extensions = 'Buttons', options = list(scrollX = TRUE,
+  dom = 'Bfrtip', 
+  buttons = c('copy', 'csv', 'excel', 'print') 
+)) %>% DT::formatStyle(columns = colnames(coverage), fontSize = '90%')
+ 
+```
+<div style="font-size: 80%;">
+`GENE` = Gene ID<br>
+`Exon` = Gene ID<br>
+`Region` = Number(chrom:start-stop)<br>
+`MeanCoverage` = mean coverage (DP) at min. MAPQ 20 <br>
+`coveredPercent` = Percent of gene covered at min. 10 DP<br>
+</div>
+<br/>
+
+<center> <font size="4"> ** Pathogenic/Likely_pathogenic (Clinvar) in targeted regions** </font> </center>
+<center> <font size="4">  -  (if target regions > 20 only sites with DP < 10 or DP4 presented)  </font> </center>
+<br/>
+
+```{r coverage.clinvar, echo=F, eval=TRUE}
+clinvar.coverage <- params$covClinvarPathogenic 
+DT::datatable(clinvar.coverage, rownames = FALSE, filter = 'top', editable = TRUE, extensions = 'Buttons', options = list(scrollX = TRUE,
+  dom = 'Bfrtip', 
+  buttons = c('copy', 'csv', 'excel', 'print') 
+)) %>% DT::formatStyle(columns = colnames(clinvar.coverage), fontSize = '90%')
+```
+<div style="font-size: 80%;">
+`VARID` = #CHROM:POS-REF-ALT<br>
+`DP` = Coverage<br>
+`RS` = dbSNP rsid from ClinVar<br>
+`CLNSIG` = Clinical significance for this single variant <br>
+`CLNREVSTAT` = ClinVar review status <br>
+`GENE` = Gene ID<br>
+`SB` = Strand Bias (Lofreq)<br>
+`DP4` = Fref, Rref, Falt, Ralt (Lofreq)<br>
+</div>
+<br/>
+

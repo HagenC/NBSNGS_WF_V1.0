@@ -1,0 +1,7 @@
+name: report_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - conda-forge::pandoc=3.2.1

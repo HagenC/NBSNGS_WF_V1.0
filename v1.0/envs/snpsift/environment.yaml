@@ -1,0 +1,9 @@
+name: snpsift_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::snpsift=5.2
+  - bioconda::snpeff=5.2
+  - bioconda::samtools=1.20

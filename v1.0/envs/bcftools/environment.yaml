@@ -1,0 +1,8 @@
+name: bcftools_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::bcftools=1.21
+  - bioconda::snpsift=5.2
