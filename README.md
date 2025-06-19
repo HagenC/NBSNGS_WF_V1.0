@@ -7,21 +7,16 @@ Nextflow NbsNgs WF(s) instructions:
 
 ## How to setup nextflow:
   1. Install java in conda env:   
-    `$conda activate base`  
-    `$conda install openjdk=22.0.1`   (NGGT runs openjdk version "1.8.0_412"!)  
-  2. Get nextflow:  
-    `$wget -qO- https://get.nextflow.io | bash`  
-    `$mv nextflow ~/bin/`  
-    `$export PATH=$HOME/bin:$PATH`  
+    `conda activate base`  
+    `conda install openjdk=22.0.1`   (NGGT runs openjdk version "1.8.0_412"!)  
+  2. Get nextflow (local):
+     `$cd <path>/V1.0` 
+     `wget -qO- https://get.nextflow.io | bash`  `  
 
 ## Quick start: 
   1.  `cd <path>/V1.0` 
-  2.  `$nextflow run main.nf`
-     
+  2.  `/nextflow run main.nf`
 
- ## Quick start: RE-do reports:
- 1. delete *.report.html from ./REPORTS  
-    `sh RUN.sh` / `nohup  RUN.sh &`  
 
 1. Organization
 <pre> <code> 
