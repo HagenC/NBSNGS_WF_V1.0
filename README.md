@@ -56,7 +56,7 @@ NBSNGS_WF_V1.0 repository
 │                      └──<sampleid_flowcell>_fastqc.zip/html
 ├─REPORT_<version>                       #Reports
 │   └── <flowcell>
-│          └── *.report.html
+│          └── .report.html
 ├─log_<version>                        #WF-reports.html and  mapping -, haplotypecaller & Lofreq logs.
      ├──<flowcell>
             ├──haplotypecaller
