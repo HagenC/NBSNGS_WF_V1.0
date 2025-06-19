@@ -82,7 +82,7 @@ NBSNGS_WF_V1.0 instructions:
 
 
 ## Detailed description:
-### 🧬 Workflow Overview: `main.nf`
+### Workflow Overview: `main.nf`
 
 **Subworkflows:**
 
@@ -92,7 +92,7 @@ NBSNGS_WF_V1.0 instructions:
 - [`ANNOTATION`](#annotation)
 - [`REPORTING`](#reporting)
 
-### ⚙️ COLLECTDATA [`collectdata.nf`]
+### COLLECTDATA [`collectdata.nf`]
 
 **Processes:**
 
@@ -107,7 +107,7 @@ NBSNGS_WF_V1.0 instructions:
 
 ---
 
-### 🧬 MAPPING [`mapping.nf`]
+### MAPPING [`mapping.nf`]
 
 **Input Channels:** `samples_for_alignment`, `unique_flowcells`
 
@@ -117,28 +117,7 @@ NBSNGS_WF_V1.0 instructions:
   - Tool: `bbmap=39.08`  
   - Settings: `samplereadstarget=93487190`  
 
-- `FASTQC [fastqc.nf]`  
-  - Tool: `multiqc=1.22.2`  
 
-- `ALIGNMENT [alignment.nf]`  
-  - Tools: `bwa-mem2=2.2.1`, `samtools=1.20`  
-  - External input: `params.bed`  
-
-- `RAW_INDEX → ADDREADGROUP → MARKDUPLICATES`  
-  - Tool: `gatk4=4.5.0.0`  
-
-- `MULTIQC`  
-  - Conditional: `doQC = FALSE` (default)  
-  - Tool: `multiqc=1.22.2`  
-
-- **Metrics:**  
-  - `RAW_DEPTH` — `mosdepth=0.3.3`  
-  - `HSMETRICS`, `ALIGNMENT_METRICS`, `INSERT_SIZE_METRICS` — `gatk4=4.5.0.0`  
-
-- **Emit:** `INDEX.out`
-
-
-#### Workflow: [main.nf]
 
 ### Subworkflow: COLLECTDATA [collectdata.nf]
 - process: FINDDATA [finddata.nf] ; env/tool: R=4.3.1
