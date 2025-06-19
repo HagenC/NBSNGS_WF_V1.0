@@ -2,8 +2,8 @@
 # NbsNgs WF
 Nextflow NbsNgs WF(s) instructions:
 
-## clone this repository:
-`git clone https://github.com/RasmussenLab/DoBSeqWF.git .`
+## Clone this repository:
+`git clone https://github.com/HagenC/NBSNGS_WF_V1.0.git .`
 
 ## How to setup nextflow:
   1. Install java in conda env:   
@@ -14,9 +14,9 @@ Nextflow NbsNgs WF(s) instructions:
     `$mv nextflow ~/bin/`  
     `$export PATH=$HOME/bin:$PATH`  
 
-## Quick start: FULL WF
-  1.  `cd /srv/data/ILMN/PIPELINES/NbsNgsWF/` 
-  2.  `sh RUN.sh` / `nohup  RUN.sh &`
+## Quick start: 
+  1.  `cd <path>/V1.0` 
+  2.  `$nextflow run main.nf`
      
 
  ## Quick start: RE-do reports:
