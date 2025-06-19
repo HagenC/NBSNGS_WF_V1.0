@@ -20,15 +20,15 @@ NBSNGS_WF_V1.0 repository
     │   └──tools
     │        └──vcfEffOnePerLine.pl
     ├── bin                                   # Executable pipeline scripts
-    │   └── <script>.R*
+    │   └── < script >.R*
     ├── profiles
     │   └── profiles.config                   # Configuration profiles for compute environments
     ├── envs
-    │   └── <name>/
+    │   └── < name >
     │       └── environment.yaml              # Conda environment definitions
     ├── main.nf                               # Main workflow 
     ├── modules/
-    │   └── <module>.nf                       # Module scripts
+    │   └── < module >.nf                       # Module scripts
     ├── subworkflows                          # Sub-workflows
     │   ├── collectdata.nf
     │   ├── mapping.nf
@@ -37,29 +37,29 @@ NBSNGS_WF_V1.0 repository
     ├── nextflow.config                       # Workflow parameters
     ├── condaEnvs                        #conda environments temporary safe-house.   
 ├───├
-├─variants_<version>                        
-│   └── \< flowcell\>                      
-│            ├──<sampleid_flowcell>.GATK.g.vcf.gz/tbi          
-│            ├──<sampleid_flowcell>.GATK.OPL.vcf  
-│            ├──<sampleid_flowcell>.lofreqDefault.vcf.gz  
-│            └──<sampleid_flowcell>.lofreqRaw.vcf.gz
-├─ QC_<version>
-│   └── <flowcell>                      
+├─variants_< version >                        
+│   └── < flowcell >                      
+│            ├──< sampleid_flowcell >.GATK.g.vcf.gz/tbi          
+│            ├──< sampleid_flowcell >.GATK.OPL.vcf  
+│            ├──< sampleid_flowcell >.lofreqDefault.vcf.gz  
+│            └──< sampleid_flowcell >.lofreqRaw.vcf.gz
+├─ QC_< version >
+│   └── < flowcell >                      
 │           ├── *multiqc_report.html
-│           └──<sampleid_flowcell>      
-│                 ├──<sampleid_flowcell>.ancestryPrediction.txt
-│                 ├──<sampleid_flowcell>.cov.gz
-│                 ├──<sampleid_flowcell>.mtDNAhg_classified.txt
+│           └──< sampleid_flowcell >      
+│                 ├──< sampleid_flowcell >.ancestryPrediction.txt
+│                 ├──< sampleid_flowcell >.cov.gz
+│                 ├──< sampleid_flowcell >.mtDNAhg_classified.txt
 │                 ├──duplication_metrics
-│                 │        └──<sampleid_flowcell>.txt
+│                 │        └──< sampleid_flowcell >.txt
 │                 └──fastq
-│                      └──<sampleid_flowcell>_fastqc.zip/html
-├─REPORT_<version>                       #Reports
-│   └── `"<flowcell>"`
+│                      └──< sampleid_flowcell >_fastqc.zip/html
+├─REPORT_< version >                       #Reports
+│   └── < flowcell > 
 │          └── .report.html
-├─log_<version>                        #WF-reports.html and  mapping -, haplotypecaller & Lofreq logs.
-     ├──<flowcell>
+├─log_< version >                        #WF-reports.html and  mapping -, haplotypecaller & Lofreq logs.
+     ├──< flowcell >
             ├──haplotypecaller
             ├──lofreq
             └──mapping
-         <code> <pre> 
+         <code> <pre > 
