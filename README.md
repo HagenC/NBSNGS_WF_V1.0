@@ -118,18 +118,6 @@ NBSNGS_WF_V1.0 instructions:
   - Settings: `samplereadstarget=93487190`  
 
 
-
-### Subworkflow: COLLECTDATA [collectdata.nf]
-- process: FINDDATA [finddata.nf] ; env/tool: R=4.3.1
-	- sqlsamplesheet.R 
-	- channel emit: alignemnt_tuple
-
-### Workflow: [main.nf]]
-- input: alignment_tuple
--  channel: samples_for_alignment, unique_flowcells
-
-### Subworkflow: MAPPING [mapping.nf] ; input: samples_for_alignment, unique_flowcells
-- process: DOWNSAMPLE [downsample.nf] ; input:samples_for_alignment ; env/tool:bbmap=39.08 ; settings: samplereadstarget=93487190
 - process: FASTQC [fastqc.nf] ; input:DOWNSAMPLE.out ;  env/tool:multiqc=1.22.2
 - channel:FASTQC.out
 - process: ALIGNMENT [alignment.nf] ; input:DOWNSAMPLE.out ; env/tool:bwa-mem2=2.2.1,samtools=1.20 ; extInput: params.bed
