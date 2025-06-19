@@ -38,7 +38,7 @@ NBSNGS_WF_V1.0 repository
     ├── condaEnvs                        #conda environments temporary safe-house.   
 ├───├
 ├─variants_<version>                        
-│   └── \<flowcell\>                      
+│   └── \< flowcell\>                      
 │            ├──<sampleid_flowcell>.GATK.g.vcf.gz/tbi          
 │            ├──<sampleid_flowcell>.GATK.OPL.vcf  
 │            ├──<sampleid_flowcell>.lofreqDefault.vcf.gz  
