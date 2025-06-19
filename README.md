@@ -175,23 +175,6 @@ NBSNGS_WF_V1.0 instructions:
 - **Channel Emit:** `INDEX.out`
 
 
-- process: FASTQC [fastqc.nf] ; input:DOWNSAMPLE.out ;  env/tool:multiqc=1.22.2
-- channel:FASTQC.out
-- process: ALIGNMENT [alignment.nf] ; input:DOWNSAMPLE.out ; env/tool:bwa-mem2=2.2.1,samtools=1.20 ; extInput: params.bed
-- process: RAW_INDEX [index.nf] ; input:ALIGNMENT.out ; env/tool: samtools=1.20 
-- process: ADDREADGROUP [addreadgroup.nf] ; input:RAW_INDEX.out ; env/tools: gatk4=4.5.0.0
-- process: MARKDUPLICATES [markduplicates] ; input:ADDREADGROUP.out ; env/tools: gatk4=4.5.0.0
-- process: MULTIQC [multiqc.nf] ; input: FASTQC.out, MARKDUPLICATES.out ; env/tools: multiqc=1.22.2
--- conditional invocation: doQC = FALSE default
-	- process: RAW_DEPTH [mosdepth.nf] ; input: RAW_INDEX.out ;env/tools: mosdepth=0.3.3
-	- process: HSMETRICS [hs_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- process: ALIGNMENT_METRICS [alignment_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- process: INSERT_SIZE_METRICS [insert_size_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- channel: FASTQC.out, HSMETRICS.out,ALIGNMENT_METRICS.out, INSERT_SIZE_METRICSt, RAW_DEPTH.out 
-	- process : MULTIQC [multiqc.nf] ; input: FASTQC.out, HSMETRICS.out,ALIGNMENT_METRICS.out, INSERT_SIZE_METRICS.out, RAW_DEPTH.out ;env/tools:multiqc=1.22.2
-	- channel emit: INDEX.out
-
-
 - conditional invocation: doCalling = TRUE default
 Subworkflow: CALLING [calling.nf] ; input: MAPPING.emit 
 - process: CLEANUP [cleanup.nf] ; input: MAPPING.emit; env/tool: samtools=1.20
