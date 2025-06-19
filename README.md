@@ -1,6 +1,5 @@
 # NBSNGS_WF_V1.0
-# NbsNgs WF
-Nextflow NbsNgs WF(s) instructions:
+NBSNGS_WF_V1.0 instructions:
 
 ## Clone this repository:
 `git clone https://github.com/HagenC/NBSNGS_WF_V1.0.git .`
