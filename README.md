@@ -2,7 +2,7 @@
 NBSNGS_WF_V1.0 repository
 
 1. Organizatioo
-<pre> <code>
+<pre> <code> ```plaintext
     ├── README.md  
     ├── DATA                        #symbolic links to data folder (/srv/data/ILMN/RunFolder_NBSNGS/)     
     ├── assets   #gets populated with  clinvarPathogenicTargetsubet.tsv, VOIS tables ets..     
@@ -62,4 +62,4 @@ NBSNGS_WF_V1.0 repository
             ├──haplotypecaller
             ├──lofreq
             └──mapping
-         <code> <pre>
+         <code> <pre> ```plaintext
