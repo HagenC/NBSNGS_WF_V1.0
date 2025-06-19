@@ -3,6 +3,59 @@ NBSNGS_WF_V1.0 repository
 
 
 1. Organization
+NBSNGS_WF_V1.0/
+├── README.md
+├── main.nf                      # Main Nextflow workflow
+├── nextflow.config             # Workflow parameters
+├── condaEnvs/                  # Conda environments temp safe-house
+├── envs/
+│   └── environment.yaml        # Conda environment definitions
+├── profiles/
+│   └── profiles.config         # Configuration profiles
+├── modules/                    # Module scripts (*.nf)
+├── subworkflows/
+│   ├── collectdata.nf
+│   ├── mapping.nf
+│   ├── calling.nf
+│   └── reporting.nf
+├── bin/                        # Executable pipeline scripts
+│   └── <script>.R*
+├── DATA/                       # Symbolic link to /srv/data/ILMN/RunFolder_NBSNGS/
+├── assets/
+│   ├── phenotype/
+│   │   ├── FounderVariants.bed             # SSI focus variants
+│   │   ├── geneFilter.list                 # Gene filter list for OPL
+│   │   └── phenotype.gene.list
+│   ├── sanity/
+│   │   └── SnpEff_geneFilter.list_observation_count.tsv
+│   ├── sql/
+│   │   ├── SampleSheets.sqlite             # Sample sheet DB
+│   │   └── variants.sqlite                 # Variant/QC DB
+│   ├── temp/                               # Temporary files
+│   └── tools/
+│       └── vcfEffOnePerLine.pl
+├── variants_/
+│   ├── <sampleid_flowcell>.GATK.g.vcf.gz
+│   ├── <sampleid_flowcell>.GATK.g.vcf.gz.tbi
+│   ├── <sampleid_flowcell>.GATK.OPL.vcf
+│   ├── <sampleid_flowcell>.lofreqDefault.vcf.gz
+│   └── <sampleid_flowcell>.lofreqRaw.vcf.gz
+├── QC_/
+│   ├── multiqc_report.html
+│   ├── <sampleid_flowcell>.ancestryPrediction.txt
+│   ├── <sampleid_flowcell>.cov.gz
+│   ├── <sampleid_flowcell>.mtDNAhg_classified.txt
+│   ├── duplication_metrics/
+│   │   └── <sampleid_flowcell>.txt
+│   └── fastq/
+│       └── <sampleid_flowcell>_fastqc.zip/.html
+├── REPORT/
+│   └── *.report.html
+├── log_/                        # Workflow log summaries
+│   ├── WF-reports.html
+│   ├── haplotypecaller/
+│   ├── lofreq/
+│   └── mapping/
 
     ├── README.md
     ├── DATA  	                          #symbolic links to data folder (/srv/data/ILMN/RunFolder_NBSNGS/)     
