@@ -3,8 +3,8 @@ NBSNGS_WF_V1.0 repository
 
 1. Organization
 <pre> <code> 
-    ├── README.md  
-    ├── DATA                                    #symbolic links to data folder (/srv/data/ILMN/RunFolder_NBSNGS/)     
+├─ README.md 
+├───├── DATA                                    #symbolic links to data folder (/srv/data/ILMN/RunFolder_NBSNGS/)     
     ├── assets                                  #gets populated with  clinvarPathogenicTargetsubet.tsv, VOIS tables ets..     
     │   ├──phenotype
     │   │     ├──FounderVariants.bed            #SSI focus variant [CHR_POS][INFO][GENE][VARID]
