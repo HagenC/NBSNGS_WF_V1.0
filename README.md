@@ -109,7 +109,7 @@ NBSNGS_WF_V1.0 instructions:
 
 ### MAPPING [`mapping.nf`]
 
-**Input Channels:** `samples_for_alignment`, `unique_flowcells`
+**Input Channels:** `samples_for_alignment`, `unique_flowcells` created from `alignment_tuple`
 
 **Processes:**
 
