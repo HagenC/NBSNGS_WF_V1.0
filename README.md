@@ -78,7 +78,7 @@ NBSNGS_WF_V1.0 instructions:
             ├──haplotypecaller
             ├──lofreq
             └──mapping
-         <code> <pre> 
+        </code> </pre>
 
 
 ## Description:
