@@ -257,6 +257,19 @@ Subworkflow: ANNOTATION [annotating.nf] ; input: CALLING.emit
 - process: ANNOTATE_ONTOLOGY [annotate_ontology.nf]; input:ANNOTATE_GNOMAD.out ; env/tool: snpsift=5.2/snpeff=5.2
 - process: OPL [opl.nf]; input: ANNOTATE_ONTOLOGY.out ; env/tool: snpsift=5.2/snpeff=5.2
 - channel: OPL_ch = OPL.out
+
+### Process: `MTDNA_HAPLOGROUP` [`mtdna_haplogroup.nf`]
+**Input:** `OPL_ch`  
+**R Script:** `mtdnahaplogroup.R`
+
+1. **Search existing results**
+   - Find all `*.mtDNAhg_classified.txt` files in `/QC/`
+
+2. **Filter new samples**
+   - Search for `*.GATK.OPL.vcf` in `/variants/`
+   - Exclude `SampleID_Flowcell` values that already have a classification file
+
+3. **Predict mtDNA haplogroup**
 - process: MTDNA_HAPLOGROUP [mtdna_haplogroup.nf]; input:  OPL_ch
 	-mtdnahaplogroup.R:
 		1. Finding existing "/QC/" *.mtDNAhg_classified.txt"
