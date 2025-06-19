@@ -83,9 +83,9 @@ NBSNGS_WF_V1.0 instructions:
 
 ## Detailed description:
 
-Workflow: [main.nf]
+#### Workflow: [main.nf]
 
-Subworkflow: COLLECTDATA [collectdata.nf]
+#### Subworkflow: COLLECTDATA [collectdata.nf]
 - process: FINDDATA [finddata.nf] ; env/tool: R=4.3.1
 	- sqlsamplesheet.R 
 	- channel emit: alignemnt_tuple
