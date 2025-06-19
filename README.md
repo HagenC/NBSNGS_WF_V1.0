@@ -111,11 +111,9 @@ NBSNGS_WF_V1.0 instructions:
 
 **Input Channels:** `samples_for_alignment`, `unique_flowcells` created from `alignment_tuple`
 
-**Processes:**
-
-- `DOWNSAMPLE [downsample.nf]`  
-  - Tool: `bbmap=39.08`  
-  - Settings: `samplereadstarget=93487190`  
+**Processes:** `DOWNSAMPLE [downsample.nf]`  
+  - **Tool:** `bbmap=39.08`  
+  - **Settings:** `samplereadstarget=93487190`  
 
 - **Process:** `FASTQC [fastqc.nf]`  
   - **Input:** `DOWNSAMPLE.out`  
