@@ -2,7 +2,7 @@
 NBSNGS_WF_V1.0 repository
 
 
-Structure:
+1. Organization
 
     ├── README.md
     ├── DATA  	                          #symbolic links to data folder (/srv/data/ILMN/RunFolder_NBSNGS/)     
