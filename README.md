@@ -81,7 +81,7 @@ NBSNGS_WF_V1.0 instructions:
         </code> </pre>
 
 
-## Description:
+## Detailed description:
 
 Workflow: [main.nf]
 
