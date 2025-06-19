@@ -117,6 +117,63 @@ NBSNGS_WF_V1.0 instructions:
   - Tool: `bbmap=39.08`  
   - Settings: `samplereadstarget=93487190`  
 
+- **Process:** `FASTQC [fastqc.nf]`  
+  - **Input:** `DOWNSAMPLE.out`  
+  - **Tool:** `multiqc=1.22.2`
+
+- **Channel:** `FASTQC.out`
+
+- **Process:** `ALIGNMENT [alignment.nf]`  
+  - **Input:** `DOWNSAMPLE.out`  
+  - **Tools:** `bwa-mem2=2.2.1`, `samtools=1.20`  
+  - **External Input:** `params.bed`
+
+- **Process:** `RAW_INDEX [index.nf]`  
+  - **Input:** `ALIGNMENT.out`  
+  - **Tool:** `samtools=1.20`
+
+- **Process:** `ADDREADGROUP [addreadgroup.nf]`  
+  - **Input:** `RAW_INDEX.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `MARKDUPLICATES [markduplicates]`  
+  - **Input:** `ADDREADGROUP.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `MULTIQC [multiqc.nf]`  
+  - **Input:** `FASTQC.out`, `MARKDUPLICATES.out`  
+  - **Tool:** `multiqc=1.22.2`  
+  - **Conditional Execution:** `doQC = FALSE` (default)
+
+<details>
+<summary>🔹 If <code>doQC = TRUE</code></summary>
+
+- **Process:** `RAW_DEPTH [mosdepth.nf]`  
+  - **Input:** `RAW_INDEX.out`  
+  - **Tool:** `mosdepth=0.3.3`
+
+- **Process:** `HSMETRICS [hs_metrics.nf]`  
+  - **Input:** `ALIGNMENT.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `ALIGNMENT_METRICS [alignment_metrics.nf]`  
+  - **Input:** `ALIGNMENT.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `INSERT_SIZE_METRICS [insert_size_metrics.nf]`  
+  - **Input:** `ALIGNMENT.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Channel:** `FASTQC.out`, `HSMETRICS.out`, `ALIGNMENT_METRICS.out`, `INSERT_SIZE_METRICS.out`, `RAW_DEPTH.out`
+
+- **Process:** `MULTIQC [multiqc.nf]`  
+  - **Input:** `FASTQC.out`, `HSMETRICS.out`, `ALIGNMENT_METRICS.out`, `INSERT_SIZE_METRICS.out`, `RAW_DEPTH.out`  
+  - **Tool:** `multiqc=1.22.2`
+
+</details>
+
+- **Channel Emit:** `INDEX.out`
+
 
 - process: FASTQC [fastqc.nf] ; input:DOWNSAMPLE.out ;  env/tool:multiqc=1.22.2
 - channel:FASTQC.out
