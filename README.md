@@ -172,36 +172,103 @@ NBSNGS_WF_V1.0 instructions:
 
 - **Channel Emit:** `INDEX.out`
 
+### CALLING [`calling.nf`]
+- **Conditional Execution:** `doCalling = TRUE` (default)
 
-- conditional invocation: doCalling = TRUE default
-Subworkflow: CALLING [calling.nf] ; input: MAPPING.emit 
-- process: CLEANUP [cleanup.nf] ; input: MAPPING.emit; env/tool: samtools=1.20
-- process: INDELQUAL [indelqual.nf] ; input: CLEANUP.out; env/tool: lofreq=2.1.5
-- process: INDEX_CLEAN [index.nf] ; input: INDELQUAL.out; env/tool: lofreq=2.1.5
-- process: LOFREQNODEFAULT [lofreq_nodefault.nf] ; input:INDEX_CLEAN.out; env/tool: lofreq=2.1.5
-- process: LOFREQCALL [lofreq_default.nf]; input: INDEX_CLEAN.out); env/tool: lofreq=2.1.5
-- process: BQSR [bqsr.nf]; input:CLEANUP.out; env/tool: gatk4=4.5.0.0
-- process: APPLY_BQSR [apply_bqsr.nf] ; input:BQSR.out; env/tool: gatk4=4.5.0.0
-- process: INDEX_HAPLOTYPECALLER [index.nf] ; input: APPLY_BQSR.out; env/tool: samtools=1.20
-- process: COVERAGE [coverage.nf]; input:INDEX_HAPLOTYPECALLER.out ; env/tool: samtools=1.20
-- process: HAPLOTYPECALLER [haplotypecaller.nf]; input: INDEX_HAPLOTYPECALLER.out ; env/tool: gatk4=4.5.0.0
-- process: GTOVCF [gtovcf.nf]; input: HAPLOTYPECALLER.out ; env/tool: gatk4=4.5.0.0
-- channel emit: GTOVCF.out
+- **Process:** `CLEANUP [cleanup.nf]`  
+  - **Input:** `MAPPING.emit`  
+  - **Tool:** `samtools=1.20`
 
+- **Process:** `INDELQUAL [indelqual.nf]`  
+  - **Input:** `CLEANUP.out`  
+  - **Tool:** `lofreq=2.1.5`
 
-- conditional invocation: doReporting = TRUE default
-Subworkflow: ANNOTATION [annotating.nf] ; input: CALLING.emit
-- process: UPDATE_CLIVAR [update_clinvar.nf]; input https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz/tbi , params.bed, params.OPL ; output:  /assets/clinvarPathogenicTargetsubet.tsv ; env/tool: bash=4.2.46, bcftools=1.6,SnpSift
-- process: GATK_LA [leftAlign.nf]; input:CALLING.emit ; env/tool: gatk4=4.5.0.0
-- process: ANNOTATE_CLINVAR [annotate_clinvar.nf]; input:GATK_LA.out ; env/tool: snpsift=5.2/snpeff=5.2, clinvar.vcf.gz
-- process: ANNOTATE_GNOMAD [annotate_gnomad.nf]; input:ANNOTATE_CLINVAR.out ; env/tool: snpsift=5.2/snpeff=5.2, gnomad.4.1
-- process: ANNOTATE_ONTOLOGY [annotate_ontology.nf]; input:ANNOTATE_GNOMAD.out ; env/tool: snpsift=5.2/snpeff=5.2
-- process: OPL [opl.nf]; input: ANNOTATE_ONTOLOGY.out ; env/tool: snpsift=5.2/snpeff=5.2
-- channel: OPL_ch = OPL.out 
-- process: MTDNA_HAPLOGROUP [mtdna_haplogroup.nf]; input:  OPL_ch ; env/tool: haplogrep3, R=4.3.1
-- process: SEX [sex.nf]; input: OPL_ch ; env/tool: R=4.3.1
-- process: ANCESTRY [ancestrymodel.nf]; input: OPL_ch ; env/tool: R=4.3.1
-- channel emit: ANCESTRY.out
+- **Process:** `INDEX_CLEAN [index.nf]`  
+  - **Input:** `INDELQUAL.out`  
+  - **Tool:** `lofreq=2.1.5`
+
+- **Process:** `LOFREQNODEFAULT [lofreq_nodefault.nf]`  
+  - **Input:** `INDEX_CLEAN.out`  
+  - **Tool:** `lofreq=2.1.5`
+
+- **Process:** `LOFREQCALL [lofreq_default.nf]`  
+  - **Input:** `INDEX_CLEAN.out`  
+  - **Tool:** `lofreq=2.1.5`
+
+- **Process:** `BQSR [bqsr.nf]`  
+  - **Input:** `CLEANUP.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `APPLY_BQSR [apply_bqsr.nf]`  
+  - **Input:** `BQSR.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `INDEX_HAPLOTYPECALLER [index.nf]`  
+  - **Input:** `APPLY_BQSR.out`  
+  - **Tool:** `samtools=1.20`
+
+- **Process:** `COVERAGE [coverage.nf]`  
+  - **Input:** `INDEX_HAPLOTYPECALLER.out`  
+  - **Tool:** `samtools=1.20`
+
+- **Process:** `HAPLOTYPECALLER [haplotypecaller.nf]`  
+  - **Input:** `INDEX_HAPLOTYPECALLER.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `GTOVCF [gtovcf.nf]`  
+  - **Input:** `HAPLOTYPECALLER.out`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Channel Emit:** `GTOVCF.out`
+
+### ANNOTATION [`annotating.nf`]
+- **Conditional Execution:** `doReporting = TRUE` (default)
+
+- **Process:** `UPDATE_CLIVAR [update_clinvar.nf]`  
+  - **Input:**  
+    - `https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz/tbi`  
+    - `params.bed`  
+    - `params.OPL`  
+  - **Output:** `/assets/clinvarPathogenicTargetsubet.tsv`  
+  - **Tools:** `bash=4.2.46`, `bcftools=1.6`, `SnpSift`
+
+- **Process:** `GATK_LA [leftAlign.nf]`  
+  - **Input:** `CALLING.emit`  
+  - **Tool:** `gatk4=4.5.0.0`
+
+- **Process:** `ANNOTATE_CLINVAR [annotate_clinvar.nf]`  
+  - **Input:** `GATK_LA.out`  
+  - **Tools:** `snpsift=5.2/snpeff=5.2`, `clinvar.vcf.gz`
+
+- **Process:** `ANNOTATE_GNOMAD [annotate_gnomad.nf]`  
+  - **Input:** `ANNOTATE_CLINVAR.out`  
+  - **Tools:** `snpsift=5.2/snpeff=5.2`, `gnomad.4.1`
+
+- **Process:** `ANNOTATE_ONTOLOGY [annotate_ontology.nf]`  
+  - **Input:** `ANNOTATE_GNOMAD.out`  
+  - **Tools:** `snpsift=5.2/snpeff=5.2`
+
+- **Process:** `OPL [opl.nf]`  
+  - **Input:** `ANNOTATE_ONTOLOGY.out`  
+  - **Tools:** `snpsift=5.2/snpeff=5.2`
+
+- **Channel:** `OPL_ch = OPL.out`
+
+- **Process:** `MTDNA_HAPLOGROUP [mtdna_haplogroup.nf]`  
+  - **Input:** `OPL_ch`  
+  - **Tools:** `haplogrep3`, `R=4.3.1`
+
+- **Process:** `SEX [sex.nf]`  
+  - **Input:** `OPL_ch`  
+  - **Tool:** `R=4.3.1`
+
+- **Process:** `ANCESTRY [ancestrymodel.nf]`  
+  - **Input:** `OPL_ch`  
+  - **Tool:** `R=4.3.1`
+
+- **Channel Emit:** `ANCESTRY.out`
+
+  
 
 - conditional invocation: doReporting = TRUE default
 Subworkflow: REPORTING [reporting.nf] ; input: ANNOTATION.emit, rmd-file [report.Rmd]
