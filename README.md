@@ -17,7 +17,7 @@ NBSNGS_WF_V1.0 instructions:
   2.  `/nextflow run main.nf`
 
 
-1. Organization
+## Organization
 <pre> <code> 
 ├─ README.md 
 ├───├── DATA                                    #symbolic links to data folder (/srv/data/ILMN/RunFolder_NBSNGS/)     
