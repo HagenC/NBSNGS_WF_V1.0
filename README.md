@@ -82,6 +82,15 @@ NBSNGS_WF_V1.0 instructions:
 
 
 ## Detailed description:
+### 🧬 Workflow Overview: `main.nf`
+
+**Subworkflows:**
+
+- [`COLLECTDATA`](#collectdata)
+- [`MAPPING`](#mapping)
+- [`CALLING`](#calling)
+- [`ANNOTATION`](#annotation)
+- [`REPORTING`](#reporting)
 
 #### Workflow: [main.nf]
 
