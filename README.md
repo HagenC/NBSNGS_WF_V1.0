@@ -92,7 +92,7 @@ NBSNGS_WF_V1.0 instructions:
   `[[:digit:]]{6}_[[:alpha:]]+[[:digit:]]+_[[:digit:]]+_[[:alnum:]]+`
 - Queries only samples with `Project_ID` matching any of:  
   `"NBS-NGS"`, `"NBS_NGS"`, `"nbs-ngs"`
-- Description/phenotype selection must have a complete match with [View Script]( /myscript.R)
+- Description/phenotype selection must have a complete match with [View Phenotype-GeneID](v1.0/assets/phenotype)
 
 
 
