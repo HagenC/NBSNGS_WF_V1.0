@@ -390,12 +390,12 @@
 #### 4. Locate Input Files
 - Searches for:
   1. OPL VCFs: `$WD/../variants/*.GATK.OPL.vcf`
-  2. LOFREQ VCFs: ``$WD/../variants/*.lofreqDefault.vcf.gz`
-  3. Coverage files: ``$WD/../QC/*.cov.gz`
-  4. Raw LOFREQ VCFs: ``$WD/../variants/*.lofreqRaw.vcf.gz`
-  5. Sex prediction results: ``$WD/../QC/*.predictedSex.txt`
-  6. mtDNA haplogroup classifications: ``$WD/../QC/*.mtDNAhg_classified.txt`
-  7. Ancestry predictions: ``$WD/../QC/*.ancestryPrediction.txt`
+  2. LOFREQ VCFs: `$WD/../variants/*.lofreqDefault.vcf.gz`
+  3. Coverage files: `$WD/../QC/*.cov.gz`
+  4. Raw LOFREQ VCFs: `$WD/../variants/*.lofreqRaw.vcf.gz`
+  5. Sex prediction results: `$WD/../QC/*.predictedSex.txt`
+  6. mtDNA haplogroup classifications: `$WD/../QC/*.mtDNAhg_classified.txt`
+  7. Ancestry predictions: `$WD/../QC/*.ancestryPrediction.txt`
 
 #### 5. Build SQLite Database
 - Creates or updates: ``$WD/assets/sql/variants.sqlite`
