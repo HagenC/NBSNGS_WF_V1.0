@@ -248,7 +248,6 @@
 - Queries samples with `Project_ID` matching any of:  
   `"NBS-NGS"`, `"NBS_NGS"`, `"nbs-ngs"` (**CRITICAL**)
 
-
 #### 7. Processed Sample Check
 - Skips samples where `SampleID_Flowcell.GATK.g.vcf.gz` already exists
 
@@ -264,53 +263,84 @@
 - `ProcessingIDs.txt`: Input to downstream processes (`channel emit: alignment_tuple`)
 
 		
-Workflow: [main.nf]]
-- input: alignment_tuple
--  channel: samples_for_alignment, unique_flowcells
 
-Subworkflow: MAPPING [mapping.nf] ; input: samples_for_alignment, unique_flowcells
-- process: DOWNSAMPLE [downsample.nf] ; input:samples_for_alignment ; env/tool:bbmap=39.08 ; settings: samplereadstarget=93487190
-- process: FASTQC [fastqc.nf] ; input:DOWNSAMPLE.out ;  env/tool:multiqc=1.22.2
-- channel:FASTQC.out
-- process: ALIGNMENT [alignment.nf] ; input:DOWNSAMPLE.out ; env/tool:bwa-mem2=2.2.1,samtools=1.20 ; extInput: params.bed
-- process: RAW_INDEX [index.nf] ; input:ALIGNMENT.out ; env/tool: samtools=1.20 
-- process: ADDREADGROUP [addreadgroup.nf] ; input:RAW_INDEX.out ; env/tools: gatk4=4.5.0.0
-- process: MARKDUPLICATES [markduplicates.nf] ; input:ADDREADGROUP.out ; env/tools: gatk4=4.5.0.0
-- process: MULTIQC [multiqc.nf] ; input: FASTQC.out, MARKDUPLICATES.out ; env/tools: multiqc=1.22.2
--- conditional invocation: doQC = FALSE default
-	- process: RAW_DEPTH [mosdepth.nf] ; input: RAW_INDEX.out ;env/tools: mosdepth=0.3.3
-	- process: HSMETRICS [hs_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- process: ALIGNMENT_METRICS [alignment_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- process: INSERT_SIZE_METRICS [insert_size_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- channel: FASTQC.out, HSMETRICS.out,ALIGNMENT_METRICS.out, INSERT_SIZE_METRICSt, RAW_DEPTH.out 
-	- process : MULTIQC [multiqc.nf] ; input: FASTQC.out, HSMETRICS.out,ALIGNMENT_METRICS.out, INSERT_SIZE_METRICS.out, RAW_DEPTH.out ;env/tools:multiqc=1.22.2
-	- channel emit: INDEX.out
-	
-- conditional invocation: doCalling = TRUE default
-Subworkflow: CALLING [calling.nf] ; input: MAPPING.emit
-- process: CLEANUP [cleanup.nf] ; input: MAPPING.emit: setting: -F 1024: exclude read that are PCR or optical duplicate, -F 512: exclude read that fails platform/vendor quality checks, -F 2048: exclude supplementary alignments, -q 18: exclude reads with mapping quality less than 18
-- process: INDELQUAL [indelqual.nf] ; input: CLEANUP.out ; env/tool: lofreq=2.1.5
-- process: INDEX_CLEAN [index.nf] ; input: INDELQUAL.out ; env/tool: lofreq=2.1.5
-- process: LOFREQNODEFAULT [lofreq_nodefault.nf] ; input:INDEX_CLEAN.out; env/tool: lofreq=2.1.5 ; settings : --force-overwrite, --call-indels,--no-default-filter,--sig 1,--bonf 1 
-- process: LOFREQCALL [lofreq_default.nf]; input: INDEX_CLEAN.out; env/tool: lofreq=2.1.5 ; settings : --force-overwrite, --call-indels
-- process: BQSR [bqsr.nf]; input:CLEANUP.out ;env/tools: gatk4=4.5.0.0
-- process: APPLY_BQSR [apply_bqsr.nf] ; input:BQSR.out ;env/tools: gatk4=4.5.0.0
-- process: INDEX_HAPLOTYPECALLER [index.nf] ; input: APPLY_BQSR.out ;env/tools: gatk4=4.5.0.0
-- process: COVERAGE [coverage.nf]; input:INDEX_HAPLOTYPECALLER.out ; env/tool: samtools=1.20 ; setting -q 20 -Q 20
-- process: HAPLOTYPECALLER [haplotypecaller.nf]; input: INDEX_HAPLOTYPECALLER.out;env/tools: gatk4=4.5.0.0; setting: --pair-hmm-implementation FASTEST_AVAILABLE, --native-pair-hmm-threads ${task.cpus}, --max-alternate-alleles 3,-ERC GVCF                       
-- process: GTOVCF [gtovcf.nf]; input: HAPLOTYPECALLER.out;env/tools: gatk4=4.5.0.0
-- channel emit: GTOVCF.out
+### Process: `MTDNA_HAPLOGROUP` [`mtdna_haplogroup.nf`]
+
+- **Input:** `OPL_ch`  
+- **R Script:** `mtdnahaplogroup.R`
+- **Tool:** `R=4.3.1`, `haplogrep=2.4.0`
+
+---
+
+#### 1. Search Existing Results
+- Searches for existing classification files:  
+  `*.mtDNAhg_classified.txt` in `/QC/`
+
+#### 2. Filter New Samples
+- Looks for `*.g.vcf.gz` files in `/variants/`
+- Filters out `SampleID_Flowcell` entries that already have corresponding classification files
 
 
-- conditional invocation: doReporting = TRUE default
-Subworkflow: ANNOTATION [annotating.nf] ; input: CALLING.emit
-- process: UPDATE_CLIVAR [update_clinvar.nf]; input https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz/tbi , params.bed, params.OPL ; output:  /assets/clinvarPathogenicTargetsubet.tsv ; env/tool: bash=4.2.46, bcftools=1.6,SnpSift
-- process: GATK_LA [leftAlign.nf]; input:CALLING.emit ; env/tool: gatk4=4.5.0.0
-- process: ANNOTATE_CLINVAR [annotate_clinvar.nf]; input:GATK_LA.out ; env/tool: snpsift=5.2/snpeff=5.2, clinvar.vcf.gz
-- process: ANNOTATE_GNOMAD [annotate_gnomad.nf]; input:ANNOTATE_CLINVAR.out ; env/tool: snpsift=5.2/snpeff=5.2, gnomad.4.1
-- process: ANNOTATE_ONTOLOGY [annotate_ontology.nf]; input:ANNOTATE_GNOMAD.out ; env/tool: snpsift=5.2/snpeff=5.2
-- process: OPL [opl.nf]; input: ANNOTATE_ONTOLOGY.out ; env/tool: snpsift=5.2/snpeff=5.2
-- channel: OPL_ch = OPL.out
+#### 3. Predict mtDNA Haplogroup
+    - classifies `g.vcf.gz`using haplogrep.
+    -  **Condition:** Classifications successfull?
+    - **If TRUE:**
+    - Computes QC metrics: mean depth (DP), variant count
+    - **If FALSE:**
+    - Generates default data frame
+---
+
+#### 4. Output
+- Writes classification files to:  
+  `/QC/*.mtDNAhg_classified.txt`
+
+---
+
+### Process: `SEX` [`sex.nf`]
+
+**Input:** `OPL_ch`, `bed`, `bed-padded`  
+**R Script:** `sexcheck.R`
+
+---
+
+#### 1. Bed File Preparation
+- **Condition:** Does expanded BED file exist?
+  - **If FALSE:**  
+    - Imports original BED file  
+    - Expands it to `chr:pos` and saves as `bedFile_expanded.bed`
+  - **If TRUE:**  
+    - Loads `bedFile_expanded.bed`
+
+---
+
+#### 2. Find Input Files
+- Locates:
+  - Coverage files: `/QC/*.cov.gz`
+  - Existing sex prediction results: `/QC/*.predictedSex.txt`
+- Filters out already classified `SampleID_Flowcell`
+
+---
+
+#### 3. Predicting Sex
+- **Condition:** Number of `chrX` coverage entries > 1
+  - **If TRUE:**
+    - Computes mean coverage of `chrX` and `chrY`
+    - **Rule:**  
+      - If `mean(chrX)/mean(chrY) < 3`, predict `"Male"`  
+      - Else, predict `"Female"`
+  - **If FALSE:**
+    - Creates default data frame:  
+      ```r
+      data.frame(chrX = 0, chrY = 0) %>%
+        mutate(SampleID_Flowcell = DB$SampleID_Flowcell[i]) %>%
+        mutate(XY.ratio = chrX / chrY) %>%
+        mutate(Sex.prediction = ifelse(XY.ratio < 3, "Male", "Female")) %>%
+        mutate(Sex.prediction = ifelse(is.na(Sex.prediction), "Insufficient data", Sex.prediction))
+      ```
+
+---
+
+Let me know if you'd like me to break any sections into tables or add code blocks for better readability!
 
 ### Process: `MTDNA_HAPLOGROUP` [`mtdna_haplogroup.nf`]
 **Input:** `OPL_ch`  
