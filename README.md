@@ -105,7 +105,7 @@ NBSNGS_WF_V1.0 instructions:
 ## Support data information
 
 - **Reference Genome**:  
-  - [`Homo_sapiens_assembly38.fasta`](https://storage.cloud.google.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta)  
+  - [Homo_sapiens_assembly38.fasta](https://storage.cloud.google.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta)  
   - Masked as described in: [DOI: 10.1038/s41587-021-01158-1](https://doi.org/10.1038/s41587-021-01158-1)  
   - Alternative scaffolds removed
 
