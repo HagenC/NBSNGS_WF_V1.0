@@ -268,100 +268,24 @@ NBSNGS_WF_V1.0 instructions:
 
 - **Channel Emit:** `ANCESTRY.out`
 
-  
+ ### REPORTING [`reporting.nf`]
+- **Conditional Execution:** `doReporting = TRUE` (default) 
+ **Input dummy:**  `ANNOTATION.emit`
 
-- conditional invocation: doReporting = TRUE default
-Subworkflow: REPORTING [reporting.nf] ; input: ANNOTATION.emit, rmd-file [report.Rmd]
-- process: BUILDSQL [buildsql.nf] ; input : ; env/tool: R=4.3.1
-- process: VOIDATABASE [voidatabase.nf] ; input: BUILDSQL.out ; env/tool: R=4.3.1
-- process: RENDER [render.nf]; input: VOIDATABASE.out ; env/tool: R=4.3.1
+- **Process:** `BUILDSQL [buildsql.nf]`  
+  - **Tool:** `R=4.3.1`
+  - **Output:** `variants.sqlite` 
 
+- **Process:** `VOIDATABASE [voidatabase.nf]`  
+  - **Tool:** `R=4.3.1`
+  - **Output:** `VOI_DB`  
+  - **Output:** `VOI_DB_PHENOTYPE`  
 
-#Detailed R scripts:
-
-Subworkflow: COLLECTDATA [collectdata.nf]
-- process: FINDDATA [finddata.nf] 
-	- sqlsamplesheet.R
-		1. SampleSheets:
-			1. lokking for SampleSheet.csv in $WD (CRITICAL)
-			2. looking for CopyComplete.txt in $WD (CRITICAL)
-			3. collecting SampleSheets.csv with accompanying CopyComplete.txt (CRITICAL)
-		2. Imports SampleSheets:
-			1. SampleSheets gets imported if containing columns ["Sample_ID", "Sample_Name", "Sample_Project", "Description"] 
-			2. Checking if valid flowcell-ID with pattern: "[[:digit:]]{6}_[[:alpha:]]+[[:digit:]]+_[[:digit:]]+_[[:alnum:]]+" (CRITICAL)
-			3. Creaing uniqe ID of "SampleID" + "Flowcell" named "SampleID.Flowcell"
-			3. Removing observations with missing "SampleID"|"Flowcell"|duplicated(.)
-		3. Finding fastq.gz files.
-			1. Searching in paths from SampleSheet collection for "*fastq.gz" files
-			2. Creating "SampleID.Flowcell" ID and filter for existing "SampleID.Flowcell" in SampleSheet collection. (CRITICAL)
-			3. Collecting filesize and mtime for remaning fastq.gz files. 
-		4. Combining SampleSheet and Fastq.gz collections:
-			1. Combining fastq.gz, SampleSheet, fastq.gz size and mtime.
-			2. Removing SampleSheet collection observations with missing fastq.gz files. 
-		5. Creating sql-database in @WD/assets/SampleSheets.sqlite:
-			1. CHECK if "SAMPLESHEETS" table exists
-			2. IF NOT EXISTS create table "SAMPLESHEETS" 
-			3. IF EXISTS append "SampleID.Flowcell" that do not exists in the table. 
-		6. Finding "SampleID.Flowcell" for processing:
-			1. Extract * from SampleSheets.sqlite where Project_ID is "NBS-NGS", "NBS_NGS", "nbs-ngs" (CRITICAL)
-		7.Checking if samples are already processed:
-			1. Check if "SampleID_Flowcell".GATK.g.vcf.gz exists. 
-		8.Choosing samples for processing:
-			1. Latest samples (mtime) gets prioritized.
-			2. Filtering out SampleID_Flowcells with existing "SampleID_Flowcell".GATK.g.vcf.gz.
-			3. Limits the number of samples to be processed to 11. 
-		9.Exporting:
-			Sample.collection.info : Existing samples in SampleSheets.sqlite with Project_ID is "NBS-NGS", "NBS_NGS", "nbs-ngs"
-			ProssedSamples.txt : send by mail when process is succesfully finished. 
-			ProcessingIDs.txt : input to downstream processed. (- channel emit: alignemnt_tuple)
-			
-Workflow: [main.nf]]
-- input: alignment_tuple
--  channel: samples_for_alignment, unique_flowcells
-
-Subworkflow: MAPPING [mapping.nf] ; input: samples_for_alignment, unique_flowcells
-- process: DOWNSAMPLE [downsample.nf] ; input:samples_for_alignment ; env/tool:bbmap=39.08 ; settings: samplereadstarget=93487190
-- process: FASTQC [fastqc.nf] ; input:DOWNSAMPLE.out ;  env/tool:multiqc=1.22.2
-- channel:FASTQC.out
-- process: ALIGNMENT [alignment.nf] ; input:DOWNSAMPLE.out ; env/tool:bwa-mem2=2.2.1,samtools=1.20 ; extInput: params.bed
-- process: RAW_INDEX [index.nf] ; input:ALIGNMENT.out ; env/tool: samtools=1.20 
-- process: ADDREADGROUP [addreadgroup.nf] ; input:RAW_INDEX.out ; env/tools: gatk4=4.5.0.0
-- process: MARKDUPLICATES [markduplicates.nf] ; input:ADDREADGROUP.out ; env/tools: gatk4=4.5.0.0
-- process: MULTIQC [multiqc.nf] ; input: FASTQC.out, MARKDUPLICATES.out ; env/tools: multiqc=1.22.2
--- conditional invocation: doQC = FALSE default
-	- process: RAW_DEPTH [mosdepth.nf] ; input: RAW_INDEX.out ;env/tools: mosdepth=0.3.3
-	- process: HSMETRICS [hs_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- process: ALIGNMENT_METRICS [alignment_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- process: INSERT_SIZE_METRICS [insert_size_metrics.nf] ; input: ALIGNMENT.out ;env/tools: gatk4=4.5.0.0
-	- channel: FASTQC.out, HSMETRICS.out,ALIGNMENT_METRICS.out, INSERT_SIZE_METRICSt, RAW_DEPTH.out 
-	- process : MULTIQC [multiqc.nf] ; input: FASTQC.out, HSMETRICS.out,ALIGNMENT_METRICS.out, INSERT_SIZE_METRICS.out, RAW_DEPTH.out ;env/tools:multiqc=1.22.2
-	- channel emit: INDEX.out
-	
-- conditional invocation: doCalling = TRUE default
-Subworkflow: CALLING [calling.nf] ; input: MAPPING.emit
-- process: CLEANUP [cleanup.nf] ; input: MAPPING.emit: setting: -F 1024: exclude read that are PCR or optical duplicate, -F 512: exclude read that fails platform/vendor quality checks, -F 2048: exclude supplementary alignments, -q 18: exclude reads with mapping quality less than 18
-- process: INDELQUAL [indelqual.nf] ; input: CLEANUP.out ; env/tool: lofreq=2.1.5
-- process: INDEX_CLEAN [index.nf] ; input: INDELQUAL.out ; env/tool: lofreq=2.1.5
-- process: LOFREQNODEFAULT [lofreq_nodefault.nf] ; input:INDEX_CLEAN.out; env/tool: lofreq=2.1.5 ; settings : --force-overwrite, --call-indels,--no-default-filter,--sig 1,--bonf 1 
-- process: LOFREQCALL [lofreq_default.nf]; input: INDEX_CLEAN.out; env/tool: lofreq=2.1.5 ; settings : --force-overwrite, --call-indels
-- process: BQSR [bqsr.nf]; input:CLEANUP.out ;env/tools: gatk4=4.5.0.0
-- process: APPLY_BQSR [apply_bqsr.nf] ; input:BQSR.out ;env/tools: gatk4=4.5.0.0
-- process: INDEX_HAPLOTYPECALLER [index.nf] ; input: APPLY_BQSR.out ;env/tools: gatk4=4.5.0.0
-- process: COVERAGE [coverage.nf]; input:INDEX_HAPLOTYPECALLER.out ; env/tool: samtools=1.20 ; setting -q 20 -Q 20
-- process: HAPLOTYPECALLER [haplotypecaller.nf]; input: INDEX_HAPLOTYPECALLER.out;env/tools: gatk4=4.5.0.0; setting: --pair-hmm-implementation FASTEST_AVAILABLE, --native-pair-hmm-threads ${task.cpus}, --max-alternate-alleles 3,-ERC GVCF                       
-- process: GTOVCF [gtovcf.nf]; input: HAPLOTYPECALLER.out;env/tools: gatk4=4.5.0.0
-- channel emit: GTOVCF.out
+- **Process:** `RENDER [render.nf]`  
+  - **Tool:** `R=4.3.1`
+  - **Output:** `*< sampleid_flowcell_description > .report.html`  
 
 
-- conditional invocation: doReporting = TRUE default
-Subworkflow: ANNOTATION [annotating.nf] ; input: CALLING.emit
-- process: UPDATE_CLIVAR [update_clinvar.nf]; input https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz/tbi , params.bed, params.OPL ; output:  /assets/clinvarPathogenicTargetsubet.tsv ; env/tool: bash=4.2.46, bcftools=1.6,SnpSift
-- process: GATK_LA [leftAlign.nf]; input:CALLING.emit ; env/tool: gatk4=4.5.0.0
-- process: ANNOTATE_CLINVAR [annotate_clinvar.nf]; input:GATK_LA.out ; env/tool: snpsift=5.2/snpeff=5.2, clinvar.vcf.gz
-- process: ANNOTATE_GNOMAD [annotate_gnomad.nf]; input:ANNOTATE_CLINVAR.out ; env/tool: snpsift=5.2/snpeff=5.2, gnomad.4.1
-- process: ANNOTATE_ONTOLOGY [annotate_ontology.nf]; input:ANNOTATE_GNOMAD.out ; env/tool: snpsift=5.2/snpeff=5.2
-- process: OPL [opl.nf]; input: ANNOTATE_ONTOLOGY.out ; env/tool: snpsift=5.2/snpeff=5.2
-- channel: OPL_ch = OPL.out
 
 ### Process: `MTDNA_HAPLOGROUP` [`mtdna_haplogroup.nf`]
 **Input:** `OPL_ch`  
