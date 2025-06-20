@@ -200,7 +200,10 @@
   - **Tool:** `R=4.3.1`
   - **Output:** `*< sampleid_flowcell_description > .report.html`  
 
-### Detailed R scripts:
+---
+## Detailed R scripts:
+---
+
 ### COLLECTDATA [`collectdata.nf`]
 
 **Subworkflow Process:** `FINDDATA` [`finddata.nf`]  
