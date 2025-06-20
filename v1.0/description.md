@@ -287,7 +287,7 @@
     - **If TRUE:**
     - Computes QC metrics: mean depth (DP), variant count
     - **If FALSE:**
-    - Generates default data frame
+    - Returns default placeholder.
 ---
 
 #### 4. Output
@@ -316,16 +316,14 @@
       - If `mean(chrX)/mean(chrY) < 3`, predict `"Male"`  
       - Else, predict `"Female"`
   - **If FALSE:**
-    - Creates default data frame 
+    -- Returns default placeholder. 
 
 
 ### Process: `ANCESTRY` [`ancestrymodel.nf`]
 
-**Input:** `OPL_ch`  
-**R Script:** `ancestrymodel.R`  
-**Channel Emit:** `ANCESTRY.out`
-
----
+- **Input:** `OPL_ch`  
+- **R Script:** `ancestrymodel.R`  
+- **Channel Emit:** `ANCESTRY.out`
 
 #### 1. Extract Sample Metadata
 - Loads `SAMPLESHEETS` from SQLite:  
@@ -333,38 +331,29 @@
 - Filters for `Sample_Project` in:  
   `"NBS-NGS"`, `"nbs-ngs"`, `"NBS_NGS"`
 
----
-
 #### 2. Find Input Files
 - Existing results: `/QC/*.ancestryPrediction.txt`
 - New candidate VCFs: `/variants/*GATK.vcf.gz`  
   - Filters out `SampleID_Flowcell` values already classified
 
----
-
 #### 3. Ancestry Prediction
 
 ##### Reference Data Imports:
 1. Selected RS IDs:  
-   `/assets/FeatureSelection_MDA4.txt`  
-   *(Q: How is this file generated?)*
-2. Reference VCF:  
-   `/assets/ancestry_reference_population.vcf`  
-   *(Q: How is this reference built?)*
-3. Reference metadata:  
-   `/assets/ReferenceData.tsv`  
-   *(Q: Source and preparation method?)*
+   `parmas.ancestry_RS_selection`
+2. Reference metadata:  
+    `ancestry_reference ` 
 
 ##### Sample Data:
 4. Imports target sample VCF  
-5. Computes `INFO`:  
+5. Computes QC measure:  
    - Count of variants in sample VCF that match reference RS IDs
 
 ---
 
 #### 4. Classification Logic
 
-- **Condition:** `INFO > 100`
+- **Condition:** `variants > 100`
   - **If TRUE:**
     1. Genotypes (GT) are matched and converted to integers
     2. Data is reshaped to long format
@@ -377,16 +366,7 @@
        - Else → **Top 1 prediction**
        
   - **If FALSE:**
-    - Returns default placeholder:
-      ```r
-      data.frame(
-        SampleID_Flowcell = VCF_list$SampleID_Flowcell[i],
-        Ancestry = "Insufficient data",
-        Probability = 0,
-        Info = 0,
-        Accuracy = 0
-      )
-      ```
+    - Returns default placeholder.
 
 ---
 
