@@ -9,11 +9,11 @@ NBSNGS_WF_V1.0 instructions:
     `conda activate base`  
     `conda install openjdk=22.0.1`   (NGGT runs openjdk version "1.8.0_412"!)  
   2. Get nextflow (local):
-     `$cd <path>/V1.0` 
-     `wget -qO- https://get.nextflow.io | bash`  `  
+     `$cd <path>/V1.0`  
+     `wget -qO- https://get.nextflow.io | bash`  `   
 
 ## Quick start: 
-  1.  `cd <path>/V1.0` 
+  1.  `cd <path>/V1.0`  
   2.  `/nextflow run main.nf`
 
 
