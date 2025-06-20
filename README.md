@@ -80,6 +80,7 @@ NBSNGS_WF_V1.0 instructions:
             └──mapping
         </code> </pre>
 
+---
 
 ## Crtitical process steps
 
@@ -98,6 +99,36 @@ NBSNGS_WF_V1.0 instructions:
 
 #### Process: Report Generation
 - Description/phenotype selection must have a complete match with `Phenotype` in  [Phenotype - Gene](v1.0/assets/phenotype/phenotype.gene.list)
+
+---
+
+## Support data information
+
+- **Reference Genome**:  
+  - [`Homo_sapiens_assembly38.fasta`](https://storage.cloud.google.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta)  
+  - Masked as described in: [DOI: 10.1038/s41587-021-01158-1](https://doi.org/10.1038/s41587-021-01158-1)  
+  - Alternative scaffolds removed
+
+- **GATK Base Quality Score Recalibration (BQSR) Files**:
+  - **[Mills + 1000G Gold Standard Indels (hg38)](https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz)**
+  - **[1000G Phase 1 High Confidence SNPs (hg38)](https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz)**
+
+
+- **SnpEff Database**: `GRCh38.113` (custom/homebrew build)
+  - **Gene annotation (GTF)**:  
+    [`Homo_sapiens.GRCh38.113.gtf.gz`](ftp://ftp.ensembl.org/pub/release-113/gtf/homo_sapiens/Homo_sapiens.GRCh38.113.gtf.gz)
+  - **Reference genome (FASTA)**:  
+    [`Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`](ftp://ftp.ensembl.org/pub/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz)
+
+- **gnomAD**: `Genomes v.4.1` 
+    https://gnomad.broadinstitute.org/data
+
+    //Ancestry prediction references
+    ancestry_reference = "/srv/data/VCF_annotations/Ancestry_prediction/Ancestry_reference_data.tsv"
+    ancestry_RS_selection = "/srv/data/VCF_annotations/Ancestry_prediction/reference_RS.tsv"
+
+
+
 
 
 
