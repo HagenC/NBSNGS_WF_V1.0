@@ -123,7 +123,7 @@ NBSNGS_WF_V1.0 instructions:
 - **gnomAD**: `Genomes v.4.1`  
     https://gnomad.broadinstitute.org/data
 
- - **Ancestry prediction**:  
+ - **Ancestry reference data**:  
   [1000genomes](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
 
 
