@@ -110,15 +110,15 @@ NBSNGS_WF_V1.0 instructions:
   - Alternative scaffolds removed
 
 - **GATK Base Quality Score Recalibration (BQSR) Files**:
-  - **[Mills + 1000G Gold Standard Indels (hg38)](https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz)**
-  - **[1000G Phase 1 High Confidence SNPs (hg38)](https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz)**
+  - [Mills + 1000G Gold Standard Indels (hg38)](https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz)
+  - [1000G Phase 1 High Confidence SNPs (hg38)](https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz)
 
 
 - **SnpEff Database**: `GRCh38.113` (custom/homebrew build)
   - **Gene annotation (GTF)**:  
-    [`Homo_sapiens.GRCh38.113.gtf.gz`](ftp://ftp.ensembl.org/pub/release-113/gtf/homo_sapiens/Homo_sapiens.GRCh38.113.gtf.gz)
+    (ftp://ftp.ensembl.org/pub/release-113/gtf/homo_sapiens/Homo_sapiens.GRCh38.113.gtf.gz)
   - **Reference genome (FASTA)**:  
-    [`Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`](ftp://ftp.ensembl.org/pub/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz)
+    (ftp://ftp.ensembl.org/pub/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz)
 
 - **gnomAD**: `Genomes v.4.1` 
     https://gnomad.broadinstitute.org/data
