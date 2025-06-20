@@ -269,6 +269,8 @@
 - `ProcessingIDs.txt`: Input to downstream processes (`channel emit: alignment_tuple`)
 
 
+---
+
 ### Process: `MTDNA_HAPLOGROUP` [`mtdna_haplogroup.nf`]
 
 - **Input:** `OPL_ch`  
@@ -321,6 +323,8 @@
   - **If FALSE:**
     -- Returns default placeholder. 
 
+
+---
 
 ### Process: `ANCESTRY` [`ancestrymodel.nf`]
 
