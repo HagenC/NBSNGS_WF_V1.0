@@ -92,7 +92,13 @@ NBSNGS_WF_V1.0 instructions:
   `[[:digit:]]{6}_[[:alpha:]]+[[:digit:]]+_[[:digit:]]+_[[:alnum:]]+`
 - Queries only samples with `Project_ID` matching any of:  
   `"NBS-NGS"`, `"NBS_NGS"`, `"nbs-ngs"`
+
+#### Process: Build Variant SQLdatabase
+- Only gene names in [Phenotype - Gene](v1.0/assets/phenotype/phenotype.gene.list)
+
+#### Process: Report Generation
 - Description/phenotype selection must have a complete match with `Phenotype` in  [Phenotype - Gene](v1.0/assets/phenotype/phenotype.gene.list)
+
 
 
 
