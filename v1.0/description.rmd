@@ -185,9 +185,24 @@
 
 - **Channel Emit:** `ANCESTRY.out`
 
-  
+ ### REPORTING [`reporting.nf`]
+- **Conditional Execution:** `doReporting = TRUE` (default) 
+ **Input dummy:**  `ANNOTATION.emit`
 
-- conditional invocation: doReporting = TRUE default
+- **Process:** `BUILDSQL [buildsql.nf]`  
+  - **Tool:** `R=4.3.1`
+  - **Output:** `variants.sqlite` 
+
+- **Process:** `VOIDATABASE [voidatabase.nf]`  
+  - **Tool:** `R=4.3.1`
+  - **Output:** `VOI_DB`  
+  - **Output:** `VOI_DB_PHENOTYPE`  
+
+- **Process:** `RENDER [render.nf]`  
+  - **Tool:** `R=4.3.1`
+  - **Output:** `*< sampleid_flowcell_description > .report.html`  
+
+
 Subworkflow: REPORTING [reporting.nf] ; input: ANNOTATION.emit, rmd-file [report.Rmd]
 - process: BUILDSQL [buildsql.nf] ; input : ; env/tool: R=4.3.1
 - process: VOIDATABASE [voidatabase.nf] ; input: BUILDSQL.out ; env/tool: R=4.3.1
