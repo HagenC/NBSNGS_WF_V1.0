@@ -87,6 +87,8 @@
 
 - **Channel Emit:** `INDEX.out`
 
+---
+
 ### CALLING [`calling.nf`]
 - **Conditional Execution:** `doCalling = TRUE` (default)
 
@@ -136,6 +138,8 @@
 
 - **Channel Emit:** `GTOVCF.out`
 
+---
+
 ### ANNOTATION [`annotating.nf`]
 - **Conditional Execution:** `doReporting = TRUE` (default)
 
@@ -182,6 +186,8 @@
   - **Tool:** `R=4.3.1`
 
 - **Channel Emit:** `ANCESTRY.out`
+
+---
 
  ### REPORTING [`reporting.nf`]
 - **Conditional Execution:** `doReporting = TRUE` (default) 
@@ -262,7 +268,6 @@
 - `ProcessedSamples.txt`: Sent via email upon successful completion
 - `ProcessingIDs.txt`: Input to downstream processes (`channel emit: alignment_tuple`)
 
-		
 
 ### Process: `MTDNA_HAPLOGROUP` [`mtdna_haplogroup.nf`]
 
@@ -270,7 +275,6 @@
 - **R Script:** `mtdnahaplogroup.R`
 - **Tools:** `R=4.3.1`, `haplogrep=2.4.0`
 
----
 
 #### 1. Search Existing Results
 - Searches for existing classification files:  
@@ -288,7 +292,6 @@
     - Computes QC metrics: mean depth (DP), variant count
     - **If FALSE:**
     - Returns default placeholder.
----
 
 #### 4. Output
 - Writes classification files to:  
@@ -349,8 +352,6 @@
 5. Computes QC measure:  
    - Count of variants in sample VCF that match reference RS IDs
 
----
-
 #### 4. Classification Logic
 
 - **Condition:** `variants > 100`
@@ -369,6 +370,7 @@
     - Returns default placeholder.
 
 ---
+
 ### Process: `BUILDSQL` [`buildsql.nf`]
  
 **Tool:** `R 4.3.1`  
@@ -395,8 +397,6 @@
   6. mtDNA haplogroup classifications: ``$WD/../QC/*.mtDNAhg_classified.txt`
   7. Ancestry predictions: ``$WD/../QC/*.ancestryPrediction.txt`
 
----
-
 #### 5. Build SQLite Database
 - Creates or updates: ``$WD/assets/sql/variants.sqlite`
 
@@ -410,8 +410,6 @@
 - **If table does not exist:**
   - Creates the table
   - Adds corresponding data
-
----
 
 #### 6. Output
 - Generates a filtered `NBSNGS_Samplesheet`
@@ -432,8 +430,6 @@
 #### 1. Load Metadata
 - Extracts `SAMPLESHEETS` from `@WD/assets/sql/SampleSheets.sqlite`
 - Filters for `Sample_Project` in: `"NBS-NGS"`, `"nbs-ngs"`, `"NBS_NGS"`
-
----
 
 #### 2. Load Reference Data
 - Imports:
@@ -478,8 +474,87 @@
     - Genotype counts (`0/0`, `0/1`, `1/1`)
     - Calculated `AF_NBSNGS` grouped by `Description`
 
+--- 
+
+### Process: `RENDER` [`render.nf`]
+
+**Input:** `VOIDATABSE.out`  
+**Tool/Environment:** `R 4.3.1`  
+**Output:** `Individual HTML reports per sample (`*.report.html`)`, `Processed_SampleIDs.txt`  
+**R Script:** `render.nf`
+
+#### 1. Load Metadata
+- Connects to:
+  - `$WD/../assets/sql/SampleSheets.sqlite` → fetches samples with `Sample_Project` in `["NBS-NGS", "nbs-ngs", "NBS_NGS"]`
+  - `variants.sqlite` → retrieves distinct `SampleID_Flowcell` from the `OPL` table
+- Determines completed reports by scanning `REPORTS_<version>/` for `*.report.html`
+
+#### 3. Identify Samples for Reporting
+- Filters for samples with:
+  - Entries in the `OPL` table
+  - **No** existing report generated
+
+#### 4. Import temp-files
+- ClinVar pathogenic subset:  
+  `clinvarPathogenicTargetsubet.tsv`
+- BED files:  
+  `bedfile_target.bed`, `bedfile_coverage_expanded.bed`, `bedfile_call_expanded.bed`
+- Phenotype gene list:  
+  `phenotype.gene.list`
+- Optional founder variants:  
+  `FounderVariants.bed`
+- VOI population data:  
+  `VOI_DB` and `VOI_DB_PHENOTYPE`
+
+#### 5. Per Sample Processing (loop)
+##### 5.1 Sample Info
+- `SampleID_Flowcell`, `Description`, `Flowcell` (phenotype ID)
+
+##### 5.2 Target Genes
+- Filters `phenotype.gene.list` using the phenotype description
+
+##### 5.3 Variant Annotation
+- Queries `OPL`, `RAW`, `LOFREQ` tables for the sample
+- Filters using:
+  - SnpEff effect matches
+  - CLNSIG (must be pathogenic, not benign)
+  - `AF_nfe < 0.01` or marked pathogenic
+
+##### 5.4 Target Region Variation
+- Fetches all variants in phenotype-relevant genes
+
+##### 5.5 VOI Phenotype Table
+- Imports VOI phenotype data and filters by `VARID`
+
+##### 5.6 Coverage
+- Joins coverage data with target BED file
+- Summarizes exon-level coverage and percent coverage
+
+##### 5.7 Other Annotations
+- **Sex prediction:** from `SEX` table
+- **mtDNA haplogroup:** from `mtDNA` table
+- **Ancestry:** from `ANCESTRY` table
+
+##### 5.8 ClinVar Pathogenic Coverage
+- Intersects ClinVar variants with coverage data
+- Filters poorly covered or unconfirmed sites
+
+##### 5.9 Founder Variants
+- Joins with coverage and annotation if present
+
+
+#### 6. Report Generation
+- Uses `rmarkdown::render()` to create a sample-specific report:
+  - Template: `bin/report.Rmd`
+  - Output: `[SampleID_Flowcell]-[Phenotype/Description].report.html`
+  - Output dir: `$WD/../REPORTS_<version>/<Flowcell>/`
+  - Parameters: annotation tables, metadata, and config
+
+
+#### 7. Final Output
+- Writes processed samples to:  
+  `Processed_SampleIDs.txt`
 
 
 
 
-- process: RENDER [render.nf]; input: VOIDATABASE.out ; env/tool: R=4.3.1
