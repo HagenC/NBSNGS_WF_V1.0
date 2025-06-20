@@ -120,12 +120,11 @@ NBSNGS_WF_V1.0 instructions:
   - **Reference genome (FASTA)**:  
     (ftp://ftp.ensembl.org/pub/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz)
 
-- **gnomAD**: `Genomes v.4.1` 
+- **gnomAD**: `Genomes v.4.1`  
     https://gnomad.broadinstitute.org/data
 
-    //Ancestry prediction references
-    ancestry_reference = "/srv/data/VCF_annotations/Ancestry_prediction/Ancestry_reference_data.tsv"
-    ancestry_RS_selection = "/srv/data/VCF_annotations/Ancestry_prediction/reference_RS.tsv"
+ - **Ancestry prediction**:  
+  [1000genomes](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
 
 
 
