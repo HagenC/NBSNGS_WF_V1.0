@@ -3,7 +3,7 @@ args <- commandArgs(trailingOnly = TRUE)
 nxf_work_dir <- args[1]
 
 
-#nxf_work_dir <-  "/srv/data/ILMN/PIPELINES/v2_NbsNgsWF"
+# nxf_work_dir <-  "/srv/data/ILMN/PIPELINES/NBSNGS_WF_v1.0/v1.0/"
 source(paste0(nxf_work_dir,"/bin/dependencies.R"))
 
 #Importing sampleheets: ----
@@ -23,17 +23,31 @@ if(file.exists(paste0(nxf_work_dir,"/assets/phenotype/FounderVariants.bed"))== "
 }
 effect_filter_SQLformat <- paste0("'", paste(keep.SnpEff.EFFECTs, collapse = "','"), "'")
 
-#Extract OPLs
+#Extract OPLs 
 con <- dbConnect(RSQLite::SQLite(), dbname = paste0(nxf_work_dir , "/assets/sql/variants.sqlite"))
-query_opl <- paste0("
-   SELECT *  FROM OPL
-   WHERE   (EFFECT IN (", effect_filter_SQLformat, ") OR CLNSIG LIKE '%pathogen%')
-   AND CLNSIG NOT IN ('Benign', 'Benign/Likely_benign', 'Likely_benign')
-   AND GENE in (",GENE_filter_SQLformat,")
- ")
+#VOIS table ----
+#effect_filter_SQLformat <- paste0("'", paste(keep.SnpEff.EFFECTs, collapse = "','"), "'")
+effect_like_sql<- paste0("EFFECT LIKE '%", keep.SnpEff.EFFECTs, "%'", collapse = " OR ")
+GENE_filter_SQLformat <- paste0("'", paste(Phenotype.gene.list, collapse = "','"), "'")
 
-OPL_VOIS <- dbGetQuery(con, query_opl) %>% left_join(., NBSNGS_sampleSheet, by = "SampleID_Flowcell") %>% replace_na(list(AF_nfe = 0))  %>%
-  mutate(Pathogenic = grepl( "Pathogenic|Likely_pathogenic", CLNSIG)) %>% filter(AF_nfe < 0.01 | Pathogenic == "TRUE")  %>% select(-Pathogenic)
+#query_opl <- paste0("SELECT *  FROM OPL WHERE SampleID_Flowcell =  '",targetSampleID,"'")
+query_opl <- paste0("
+    SELECT *  FROM OPL WHERE  ((", effect_like_sql, ") OR CLNSIG LIKE '%pathogen%')
+    AND (CLNSIG NOT IN ('Benign', 'Benign/Likely_benign', 'Likely_benign') OR CLNSIG IS NULL)
+    AND GENE in (",GENE_filter_SQLformat,") ")
+OPL_VOIS <- dbGetQuery(con, query_opl)  %>% unite(VARID, c(CHROM, POS, REF, ALT), sep = "-", remove = FALSE) %>% replace_na(list(AF_nfe = 0))  %>%
+  mutate(Pathogenic = grepl( "Pathogenic|Likely_pathogenic", CLNSIG)) %>% filter(AF_nfe < 0.01 | Pathogenic == "TRUE")   %>% select(-Pathogenic)
+
+
+# query_opl <- paste0("
+#    SELECT *  FROM OPL
+#    WHERE   (EFFECT IN (", effect_filter_SQLformat, ") OR CLNSIG LIKE '%pathogen%')
+#    AND CLNSIG NOT IN ('Benign', 'Benign/Likely_benign', 'Likely_benign')
+#    AND GENE in (",GENE_filter_SQLformat,")
+#  ")
+# 
+# OPL_VOIS <- dbGetQuery(con, query_opl) %>% left_join(., NBSNGS_sampleSheet, by = "SampleID_Flowcell") %>% replace_na(list(AF_nfe = 0))  %>%
+#   mutate(Pathogenic = grepl( "Pathogenic|Likely_pathogenic", CLNSIG)) %>% filter(AF_nfe < 0.01 | Pathogenic == "TRUE")  %>% select(-Pathogenic)
 
 
 VOIS_extraction_list <- OPL_VOIS %>% mutate(CHR_POS = paste0(CHROM, "-", POS)) %>% pull(CHR_POS)
@@ -58,10 +72,13 @@ VOI_DB <- OPL_VOIS %>%   unite(VARID, c(CHROM, POS, REF, ALT), sep = "-", remove
   spread(GT, n) 
 VOI_DB <- VOI_DB %>%
   mutate(`0/1` = ifelse(!("0/1" %in% names(VOI_DB)), 0, ifelse(is.na(`0/1`), 0, `0/1`)),
-         `1/1` = ifelse(!("1/1" %in% names(VOI_DB)), 0, ifelse(is.na(`1/1`), 0, `1/1`))) %>%
-  mutate(CHR_POS = str_extract(VARID, "chr[[:digit:]]+-[[:digit:]]+|chr[[:alpha:]]-[[:digit:]]+")) %>% replace_na(list(`0/1` = 0, `1/1` = 0)) %>% mutate(alleles = `0/1` + `1/1`*2) %>%  
-  left_join(., coverage_VOIS_count, by = "CHR_POS")  %>% mutate(NBSNGS_AF = alleles/PASSED.alleles) %>% select(-alleles, -CHR_POS) %>% left_join(., VOI_DB_GENE, by = "VARID") %>% 
-  select(VARID, GENE, everything()) %>% rename( Heterozygote = `0/1`, Homozygote = `1/1`) %>% mutate(NBSNGS_AF = round(NBSNGS_AF, digits = 5))
+         `1/1` = ifelse(!("1/1" %in% names(VOI_DB)), 0, ifelse(is.na(`1/1`), 0, `1/1`)),
+         `1/2` = ifelse(!("1/2" %in% names(VOI_DB)), 0, ifelse(is.na(`1/2`), 0, `1/2`)),
+         `./.` = ifelse(!("./." %in% names(VOI_DB)), 0, ifelse(is.na(`./.`), 0, `./.`))) %>%
+  mutate(CHR_POS = str_extract(VARID, "chr[[:digit:]]+-[[:digit:]]+|chr[[:alpha:]]-[[:digit:]]+")) %>% replace_na(list(`0/1` = 0, `1/1` = 0, `1/2` = 0)) %>% 
+  mutate(alleles = `0/1` + `1/1`*2 + `1/2`) %>%  
+  inner_join(., coverage_VOIS_count, by = "CHR_POS")  %>% mutate(NBSNGS_AF = alleles/PASSED.alleles) %>% select(-alleles, -CHR_POS) %>% left_join(., VOI_DB_GENE, by = "VARID") %>% 
+  select(VARID, GENE, everything()) %>% rename( Heterozygote = `0/1`, Homozygote = `1/1`, Missing = `./.`, Heterozygote_nonRef = `1/2`) %>% mutate(NBSNGS_AF = round(NBSNGS_AF, digits = 5))  
 }else{
   VOI_DB <- data.frame(VARID = NA,    GENE = NA,    Heterozygote = NA,   Homozygote = NA,      PASSED.alleles = NA,  FAILED.alleles = NA,  NBSNGS_AF = NA)
 }
@@ -71,17 +88,19 @@ VOI_DB <- VOI_DB %>%
 covarage_PHENO <- coverage_VOIS %>% left_join(., NBSNGS_sampleSheet, by = "SampleID_Flowcell") %>% group_by(CHR_POS, Description) %>% 
   summarise(PASSED.alleles = length(which( DP >= 10))*2, FAILED.alleles = length(which( DP < 10))*2, .groups = "keep") %>% unite(CHR_POS_PHENOTYPE,c(CHR_POS, Description), sep = "_" )
 if(nrow(OPL_VOIS) > 0){
-VOI_DB_PHENOTYPE <- OPL_VOIS %>%   unite(VARID, c(CHROM, POS, REF, ALT), sep = "-", remove = FALSE) %>% group_by(VARID, Description) %>% 
+VOI_DB_PHENOTYPE <- OPL_VOIS %>%  left_join(., NBSNGS_sampleSheet, by = "SampleID_Flowcell") %>%  unite(VARID, c(CHROM, POS, REF, ALT), sep = "-", remove = FALSE) %>% group_by(VARID, Description) %>% 
   mutate(GT = ifelse(GT == "0|1", "0/1", GT)) %>% mutate(GT = ifelse(GT == "1|1", "1/1", GT)) %>%  count(GT) %>% 
   spread(GT, n) 
 VOI_DB_PHENOTYPE <- VOI_DB_PHENOTYPE %>%
   mutate(`0/1` = ifelse(!("0/1" %in% names(VOI_DB_PHENOTYPE)), 0, ifelse(is.na(`0/1`), 0, `0/1`)),
-         `1/1` = ifelse(!("1/1" %in% names(VOI_DB_PHENOTYPE)), 0, ifelse(is.na(`1/1`), 0, `1/1`))) %>%
-  mutate(CHR_POS = str_extract(VARID, "chr[[:digit:]]+-[[:digit:]]+|chr[[:alpha:]]-[[:digit:]]+")) %>% replace_na(list(`0/1` = 0, `1/1` = 0))  %>%
-  mutate(alleles = `0/1` + `1/1`*2) %>% 
-  unite(CHR_POS_PHENOTYPE,c(CHR_POS, Description), sep = "#" ) %>% 
-  left_join(., covarage_PHENO, by = "CHR_POS_PHENOTYPE") %>% separate(CHR_POS_PHENOTYPE, c("CHR_POS", "Phenotype"), sep = "#") %>% mutate(Phenotype_NBSNGS_AF = alleles/PASSED.alleles) %>% select(-alleles, -CHR_POS) %>% left_join(., VOI_DB_GENE, by = "VARID") %>% 
-  select(VARID, GENE, everything())  %>% rename(Heterozygote = `0/1`, Homozygote = `1/1`) %>% mutate(Phenotype_NBSNGS_AF = round(Phenotype_NBSNGS_AF, digits = 5))
+         `1/1` = ifelse(!("1/1" %in% names(VOI_DB_PHENOTYPE)), 0, ifelse(is.na(`1/1`), 0, `1/1`)),
+         `1/2` = ifelse(!("1/2" %in% names(VOI_DB_PHENOTYPE)), 0, ifelse(is.na(`1/2`), 0, `1/2`)),
+         `./.` = ifelse(!("./." %in% names(VOI_DB_PHENOTYPE)), 0, ifelse(is.na(`./.`), 0, `./.`))) %>%
+  mutate(CHR_POS = str_extract(VARID, "chr[[:digit:]]+-[[:digit:]]+|chr[[:alpha:]]-[[:digit:]]+")) %>% replace_na(list(`0/1` = 0, `1/1` = 0, `1/2` = 0)) %>% 
+  mutate(alleles = `0/1` + `1/1`*2 + `1/2`) %>% 
+  unite(CHR_POS_PHENOTYPE,c(CHR_POS, Description), sep = "_" ) %>% 
+  left_join(., covarage_PHENO, by = "CHR_POS_PHENOTYPE") %>% separate(CHR_POS_PHENOTYPE, c("CHR_POS", "Phenotype"), sep = "_") %>% mutate(Phenotype_NBSNGS_AF = alleles/PASSED.alleles) %>% select(-alleles, -CHR_POS) %>% left_join(., VOI_DB_GENE, by = "VARID") %>% 
+  select(VARID, GENE, everything())  %>% rename( Heterozygote = `0/1`, Homozygote = `1/1`, Missing = `./.`, Heterozygote_nonRef = `1/2`) %>% mutate(Phenotype_NBSNGS_AF = round(Phenotype_NBSNGS_AF, digits = 5))
 }else{
   VOI_DB_PHENOTYPE <- data.frame(VARID = NA,    GENE = NA,    Heterozygote = NA,   Homozygote = NA,      PASSED.alleles = NA,  FAILED.alleles = NA,  Phenotype_NBSNGS_AF = NA)
 }
