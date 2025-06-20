@@ -94,7 +94,7 @@ NBSNGS_WF_V1.0 instructions:
   `"NBS-NGS"`, `"NBS_NGS"`, `"nbs-ngs"`
 
 #### Process: Build Variant SQLdatabase
-- Only gene annotations listed in (v1.0/assets/phenotype/geneFilter.list) are considered for reporting
+- Only gene annotations listed in [Gene filter list](v1.0/assets/phenotype/geneFilter.list) are considered for reporting
 
 #### Process: Report Generation
 - Description/phenotype selection must have a complete match with `Phenotype` in  [Phenotype - Gene](v1.0/assets/phenotype/phenotype.gene.list)
