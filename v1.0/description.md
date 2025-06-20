@@ -212,8 +212,8 @@
 
 
 #### 1. SampleSheet Collection
-- Searches for `SampleSheet.csv` in `$WD` (**CRITICAL**)
-- Verifies presence of accompanying `CopyComplete.txt` in `$WD` (**CRITICAL**)
+- Searches for `SampleSheet.csv` i `$WD/DATA/` (**CRITICAL**)
+- Verifies presence of accompanying `CopyComplete.txt`  `$WD/DATA/` (**CRITICAL**)
 - Collects only those `SampleSheet.csv` files that have a matching `CopyComplete.txt` (**CRITICAL**)
 
 
@@ -238,7 +238,7 @@
 
 
 #### 5. SQLite Database Construction
-- Database path: `@WD/assets/SampleSheets.sqlite`
+- Database path: `@WD/assets/sql/SampleSheets.sqlite`
 - Checks for existing table `SAMPLESHEETS`
   - If absent, creates the table
   - If present, appends new entries where `SampleID.Flowcell` is not already listed
@@ -274,7 +274,7 @@
 
 #### 1. Search Existing Results
 - Searches for existing classification files:  
-  `*.mtDNAhg_classified.txt` in `/QC/`
+  `*.mtDNAhg_classified.txt` in `$WD/../QC/`
 
 #### 2. Filter New Samples
 - Looks for `*.g.vcf.gz` files in `/variants/`
@@ -292,7 +292,7 @@
 
 #### 4. Output
 - Writes classification files to:  
-  `/QC/*.mtDNAhg_classified.txt`
+  `$WD/../QC/*.mtDNAhg_classified.txt`
 
 ---
 
@@ -304,7 +304,7 @@
 
 #### 1. Find Input Files
 - Locates:
-  - Coverage files: `/QC/*.cov.gz`
+  - Coverage files: `$WD/../QC/*.cov.gz`
   - Existing sex prediction results: `/QC/*.predictedSex.txt`
 - Filters out already classified `SampleID_Flowcell`
 
@@ -327,13 +327,13 @@
 
 #### 1. Extract Sample Metadata
 - Loads `SAMPLESHEETS` from SQLite:  
-  `/assets/SampleSheets.sqlite`
+  `$WD/assets/sql/SampleSheets.sqlite`
 - Filters for `Sample_Project` in:  
   `"NBS-NGS"`, `"nbs-ngs"`, `"NBS_NGS"`
 
 #### 2. Find Input Files
-- Existing results: `/QC/*.ancestryPrediction.txt`
-- New candidate VCFs: `/variants/*GATK.vcf.gz`  
+- Existing results: `$WD/../QC/*.ancestryPrediction.txt`
+- New candidate VCFs: `$WD/../variants/*GATK.vcf.gz`  
   - Filters out `SampleID_Flowcell` values already classified
 
 #### 3. Ancestry Prediction
@@ -369,77 +369,117 @@
     - Returns default placeholder.
 
 ---
-
-Let me know if you'd like a version with tables, diagrams, or callouts for key thresholds like `INFO > 100` or `probability < 0.6`.
-
-
-- process: ANCESTRY [ancestrymodel.nf]; input: OPL_ch
-	- ancestrymodel.R 
-		1.Extract SAMPLESHEETS from "/assets/SampleSheets.sqlite"
-		2.Sample_Project = NBS-NGS, nbs-ngs or NBS_NGS 
-		3. FIND files:
-			DONE "QC/" "*.ancestryPrediction.txt"
-			VCF_list "/variants" "*GATK.vcf.gz$" filtering out SampleID_Flowcell in step 1. 
-		4. Ancestry prediction:
-			1. Importing selected-RS from "/assets/FeatureSelection_MDA4.txt" (how is it made?)
-			2. Importing reference-VCF "/assets/ancestry_reference_population.vcf" (how is it made?)
-			3. Importing reference-DATA "/assets/ReferenceData.tsv" (how is it made?)
-			4. Importing Sample-VCF
-			5. Creating INFO as number of variants in in Sample-VCF that have matching variant in reference-VCF
-			6. Conditional: INFO > 100
-				1. If TRUE: GTs in Sample-VCF is matched with Reference-VCF IDs and GTs converted to integer and wrangled into long format. 
-				2. Reference-DATA is subet to matching Sample-VCF RS ids and split into train and test set (0.8)
-				3. randomforest model is build and tested on test set. 
-				4. Ancestry is predicted on Sample-VCF subset adn Accuracy of test-set calculated.
-				5. If Probability is < 0.6 top 2 is shown else top 1. 
-			7. If FALSE: data.frame is generated: data.frame(SampleID_Flowcell = VCF_list$SampleID_Flowcell[i], Ancestry = "Insufficent data", Probability = 0, Info = 0, Accuracy = 0)
-- channel emit: ANCESTRY.out
+### Process: `BUILDSQL` [`buildsql.nf`]
+ 
+**Tool:** `R 4.3.1`  
+**Output:** `SAMPLESforREPORTING.txt`, `variants.sqlite` 
+**R Script:** `buildsql.R`
 
 
+#### 1. Load Sample Metadata
+- Extracts `SAMPLESHEETS` from `$WD/assets/sql/SampleSheets.sqlite`
+- Filters for `Sample_Project` in: `"NBS-NGS"`, `"nbs-ngs"`, `"NBS_NGS"`
 
 
-- conditional invocation: doReporting = TRUE default
-Subworkflow: REPORTING [reporting.nf] ; input: ANNOTATION.emit, rmd-file [report.Rmd]
-- process: BUILDSQL [buildsql.nf] ; input : bedfile, bedfile.padded ; env/tool: R=4.3.1, output: "SAMPLESforREPORTING.txt"
-	- buildsql.R:
-		1.Extract SAMPLESHEETS from "/assets/SampleSheets.sqlite"
-		2.Sample_Project = NBS-NGS, nbs-ngs or NBS_NGS 
-		3. Conditional: if(file.exists(paste0(nxf_work_dir,"/assets/bedFile_expanded.bed"))== "FALSE")
-			FALSE: Import bed-file and expand to chr:pos to make expanded-bed-file.
-			TRUE: import expanded-bed-file.
-		4.Import "phenotype.gene.list"
-		5.Filter expanded-bed-file for target gene-ids.
-		6. FIND files:
-			1. OPLs in "/variants" - "*.GATK.OPL.vcf$"
-			2. LOFREQ in "/variants" - "*.lofreqDefault.vcf.gz$"
-			3. COV in "/QC" - "*.cov.gz$"
-			4. RAW in "/variants" - "*.lofreqRaw.vcf.gz$"
-			5. SEX in "/QC" - *.predictedSex.txt$"
-			6: mtDNA in "/QC/" - "*.mtDNAhg_classified.txt$"
-			7: ANCESTRY  in "QC" - "*.ancestryPrediction.txt$"
-		7. Creating sql-database in @WD/assets/variants.sqlite:
-			1.Check if tables: LOFREQ, OPL, COV, RAW, SEX, mtDNA and ANCESTRY exists.
-			2. TRUE table exists:
-				1.For each table LOFREQ, OPL, COV, RAW, SEX, mtDNA and ANCESTRY extract SampleID_Flowcell and filter out SampleID_Flowcell from step 6.(FIND files:)
-				2.Add if-any to the table.
-			3. FALSE table exist:
-				1. Create table and add to the table.
-		8. OUTPUT: step 1. NBSNGS_Samplesheet where SampleID_Flowcell *".report.html" is filtered out. 
-- process: VOIDATABASE [voidatabase.nf] ; input: BUILDSQL.out ; env/tool: R=4.3.1, output: VOI_DB, VOID_DB_PHENOTYPE
-	- voiddatabase.R:
-		1.Extract SAMPLESHEETS from "/assets/SampleSheets.sqlite"
-		2.Sample_Project = NBS-NGS, nbs-ngs or NBS_NGS
-		3.Import "phenotype.gene.list"
-		4.Import FounderVariants.bed
-		5.Importing SnpEff "EFFECT" filter:
-		6.Importing from  "/assets/variants.sqlite" OPL table where EFFECT in EFFECT-filter and CLNSIG "*pathogen*" and not "*benign*"  - filtered for AF_ < 0.01 and "*Pathogenic"
-		7.Creating chr:pos extraction list based on step 6. 
-		8.Importing coverage from "/assets/variants.sqlite" COV table where CHR_POS in step 7.
-		9.Creating "VOI_DB":
-			1. Creating "coverage_VOIS_count" number of failed.alleles (DP < 10) and passed.alleles (PD >= 10)
-			2.Creating "VOI_DB_GENE" VARID (chr-pos-ref-alt) and GENE from OPL_VOIS from step 6.
-			3.Creating "VOI_DB" - VARID (chr-pos-ref-alt) GT (0/0,0/1,1/1) count caclulating AF_NBSNGS based on step 1 and 2. 
-		10.Creating "VOI_DB_PHENO":
-			1. "coverage_PHENO" number of failed.alleles (DP < 10) and passed.alleles (PD >= 10) geouped by "Description"
-			2. Creating "VOI_DB_PHENOTYPE" - VARID (chr-pos-ref-alt), Description ,GT (0/0,0/1,1/1) count caclulating AF_NBSNGS based on step 1 grouped by Description.
+#### 2. Load Gene Targets
+- Imports: `phenotype.gene.list`
+- Filters expanded BED file using gene IDs from phenotype list
+
+#### 4. Locate Input Files
+- Searches for:
+  1. OPL VCFs: `$WD/../variants/*.GATK.OPL.vcf`
+  2. LOFREQ VCFs: ``$WD/../variants/*.lofreqDefault.vcf.gz`
+  3. Coverage files: ``$WD/../QC/*.cov.gz`
+  4. Raw LOFREQ VCFs: ``$WD/../variants/*.lofreqRaw.vcf.gz`
+  5. Sex prediction results: ``$WD/../QC/*.predictedSex.txt`
+  6. mtDNA haplogroup classifications: ``$WD/../QC/*.mtDNAhg_classified.txt`
+  7. Ancestry predictions: ``$WD/../QC/*.ancestryPrediction.txt`
+
+---
+
+#### 5. Build SQLite Database
+- Creates or updates: ``$WD/assets/sql/variants.sqlite`
+
+##### Table Handling:
+- **Checks for existence of tables:**  
+  `LOFREQ`, `OPL`, `COV`, `RAW`, `SEX`, `mtDNA`, `ANCESTRY`
+- **If table exists:**
+  - Extracts `SampleID_Flowcell` from input files
+  - Filters out existing entries
+  - Appends new data to the table
+- **If table does not exist:**
+  - Creates the table
+  - Adds corresponding data
+
+---
+
+#### 6. Output
+- Generates a filtered `NBSNGS_Samplesheet`
+- Final output: `SAMPLESforREPORTING.txt`  
+  - Contains samples where `*.report.html` does **not** already exist for `SampleID_Flowcell`
+
+---
+
+### Process: `VOIDATABASE` [`voidatabase.nf`]
+
+**Input:** `BUILDSQL.out`  
+**Tool/Environment:** `R 4.3.1`  
+**Output:** `VOI_DB`, `VOID_DB_PHENOTYPE`  
+**R Script:** `voiddatabase.R`
+
+---
+
+#### 1. Load Metadata
+- Extracts `SAMPLESHEETS` from `@WD/assets/sql/SampleSheets.sqlite`
+- Filters for `Sample_Project` in: `"NBS-NGS"`, `"nbs-ngs"`, `"NBS_NGS"`
+
+---
+
+#### 2. Load Reference Data
+- Imports:
+  - `phenotype.gene.list`
+  - `FounderVariants.bed`
+  - SnpEff `EFFECT` filter list
+
+#### 3. Import and Filter Variants
+- From `$WD/assets/sql/variants.sqlite`, `OPL` table:
+  - Filters where:
+    - `EFFECT` is in EFFECT filter list
+    - `CLNSIG` contains `"*pathogen*"` and **not** `"*benign*"`
+    - `AF_` < 0.01
+    - Text contains `"Pathogenic"`
+
+#### 4. Generate Variant Coordinates
+- Creates `chr:pos` extraction list based on filtered variants from step 3
+
+
+#### 5. Import Coverage Data
+- From `$WD/assets/sql/variants.sqlite`, `COV` table:
+  - Filters where `CHR_POS` matches the list from step 4
+
+#### 6. Create `VOI_DB`
+- **coverage_VOIS_count**:
+  - Counts of failed alleles (`DP < 10`) and passed alleles (`DP ≥ 10`)
+- **VOI_DB_GENE**:
+  - Contains `VARID` (`chr-pos-ref-alt`) and `GENE` for variants from step 3
+- **VOI_DB**:
+  - Contains:
+    - `VARID` (`chr-pos-ref-alt`)
+    - Genotype counts (`0/0`, `0/1`, `1/1`)
+    - Calculated `AF_NBSNGS` from the filtered sample data (steps 1 & 2)
+
+#### 7. Create `VOI_DB_PHENOTYPE`
+- **coverage_PHENO**:
+  - Counts of failed and passed alleles grouped by `Description`
+- **VOI_DB_PHENOTYPE**:
+  - Contains:
+    - `VARID` (`chr-pos-ref-alt`)
+    - `Description`
+    - Genotype counts (`0/0`, `0/1`, `1/1`)
+    - Calculated `AF_NBSNGS` grouped by `Description`
+
+
+
+
+
 - process: RENDER [render.nf]; input: VOIDATABASE.out ; env/tool: R=4.3.1
