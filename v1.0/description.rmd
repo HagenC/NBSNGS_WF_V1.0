@@ -11,9 +11,7 @@
 
 ### COLLECTDATA [`collectdata.nf`]
 
-**Processes:**
-
-- `FINDDATA [finddata.nf]`  
+**Processes:** - `FINDDATA [finddata.nf]`  
   - **Tool:** `R=4.3.1`  
   - **Script:** `sqlsamplesheet.R`  
   - **Function:**  
@@ -33,8 +31,8 @@
   - **Settings:** `samplereadstarget=93487190`  
 
 - **Process:** `FASTQC [fastqc.nf]`  
-  - **Input:** `DOWNSAMPLE.out`  
-  - **Tool:** `multiqc=1.22.2`
+  - **Input:** `DOWNSAMPLE.out` (dummy)  
+  - **Tool:** `fastqc=0.12.1`
 
 - **Channel:** `FASTQC.out`
 
@@ -202,18 +200,80 @@
   - **Tool:** `R=4.3.1`
   - **Output:** `*< sampleid_flowcell_description > .report.html`  
 
+### Detailed R scripts:
+### COLLECTDATA [`collectdata.nf`]
 
-Subworkflow: REPORTING [reporting.nf] ; input: ANNOTATION.emit, rmd-file [report.Rmd]
-- process: BUILDSQL [buildsql.nf] ; input : ; env/tool: R=4.3.1
-- process: VOIDATABASE [voidatabase.nf] ; input: BUILDSQL.out ; env/tool: R=4.3.1
-- process: RENDER [render.nf]; input: VOIDATABASE.out ; env/tool: R=4.3.1
+**Subworkflow Process:** `FINDDATA` [`finddata.nf`]  
+- **Tool:** `R 4.3.1`  
+- **Script:** `sqlsamplesheet.R`
 
+---
 
-#Detailed R scripts:
+#### 1. SampleSheet Collection
+- Searches for `SampleSheet.csv` in `$WD` (**CRITICAL**)
+- Verifies presence of accompanying `CopyComplete.txt` in `$WD` (**CRITICAL**)
+- Collects only those `SampleSheet.csv` files that have a matching `CopyComplete.txt` (**CRITICAL**)
 
-Subworkflow: COLLECTDATA [collectdata.nf]
-- process: FINDDATA [finddata.nf] 
-	- sqlsamplesheet.R
+---
+
+#### 2. SampleSheet Import and Validation
+- Imports only `SampleSheet.csv` files containing all required columns:  
+  `["Sample_ID", "Sample_Name", "Sample_Project", "Description"]`
+- Validates Flowcell ID using regex pattern:  
+  `[[:digit:]]{6}_[[:alpha:]]+[[:digit:]]+_[[:digit:]]+_[[:alnum:]]+` (**CRITICAL**)
+- Generates unique `SampleID.Flowcell` identifier: `Sample_ID + Flowcell`
+- Removes entries with missing `SampleID`, missing `Flowcell`, or duplicate rows
+
+---
+
+#### 3. FASTQ File Discovery
+- Recursively searches collected paths for `*.fastq.gz` files
+- Constructs `SampleID.Flowcell` identifiers and filters for matches in the imported SampleSheet (**CRITICAL**)
+- Captures `filesize` and `mtime` for each valid FASTQ file
+
+---
+
+#### 4. Merging FASTQ and SampleSheet Data
+- Combines FASTQ metadata with SampleSheet entries
+- Removes SampleSheet entries that lack corresponding FASTQ files
+
+---
+
+#### 5. SQLite Database Construction
+- Database path: `@WD/assets/SampleSheets.sqlite`
+- Checks for existing table `SAMPLESHEETS`
+  - If absent, creates the table
+  - If present, appends new entries where `SampleID.Flowcell` is not already listed
+
+---
+
+#### 6. Sample Selection for Processing
+- Queries samples with `Project_ID` matching any of:  
+  `"NBS-NGS"`, `"NBS_NGS"`, `"nbs-ngs"` (**CRITICAL**)
+
+---
+
+#### 7. Processed Sample Check
+- Skips samples where `SampleID_Flowcell.GATK.g.vcf.gz` already exists
+
+---
+
+#### 8. Processing Prioritization
+- Prioritizes samples based on latest `mtime`
+- Excludes already processed samples
+- Limits selection to **11 samples max**
+
+---
+
+#### 9. Outputs
+- `Sample.collection.info`: Existing samples from `SampleSheets.sqlite` with relevant `Project_ID`s
+- `ProcessedSamples.txt`: Sent via email upon successful completion
+- `ProcessingIDs.txt`: Input to downstream processes (`channel emit: alignment_tuple`)
+
+### COLLECTDATA [`collectdata.nf`]
+**Processes:** - `FINDDATA [finddata.nf]`  
+  - **Tool:** `R=4.3.1`  
+  - **Script:** `sqlsamplesheet.R`  
 		1. SampleSheets:
 			1. lokking for SampleSheet.csv in $WD (CRITICAL)
 			2. looking for CopyComplete.txt in $WD (CRITICAL)
