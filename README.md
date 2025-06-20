@@ -83,6 +83,17 @@ NBSNGS_WF_V1.0 instructions:
 
 ## Crtitical process steps
 
+#### Process: SampleSheet Collection
+- Searches for `SampleSheet.csv` i `$WD/DATA/*`
+- Verifies presence of accompanying `CopyComplete.txt`  `$WD/DATA/*`
+- Imports only `SampleSheet.csv` files containing all required columns:  
+  `["Sample_ID", "Sample_Name", "Sample_Project", "Description"]`
+- Validates Flowcell ID using regex pattern:  
+  `[[:digit:]]{6}_[[:alpha:]]+[[:digit:]]+_[[:digit:]]+_[[:alnum:]]+`
+- Queries only samples with `Project_ID` matching any of:  
+  `"NBS-NGS"`, `"NBS_NGS"`, `"nbs-ngs"`
+- Description/phenotype selection must have a complete match with [View Script]( /myscript.R)
+
 
 
 
