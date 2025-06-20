@@ -210,14 +210,12 @@
 - **Tool:** `R 4.3.1`  
 - **Script:** `sqlsamplesheet.R`
 
----
 
 #### 1. SampleSheet Collection
 - Searches for `SampleSheet.csv` in `$WD` (**CRITICAL**)
 - Verifies presence of accompanying `CopyComplete.txt` in `$WD` (**CRITICAL**)
 - Collects only those `SampleSheet.csv` files that have a matching `CopyComplete.txt` (**CRITICAL**)
 
----
 
 #### 2. SampleSheet Import and Validation
 - Imports only `SampleSheet.csv` files containing all required columns:  
@@ -227,20 +225,17 @@
 - Generates unique `SampleID.Flowcell` identifier: `Sample_ID + Flowcell`
 - Removes entries with missing `SampleID`, missing `Flowcell`, or duplicate rows
 
----
 
 #### 3. FASTQ File Discovery
 - Recursively searches collected paths for `*.fastq.gz` files
 - Constructs `SampleID.Flowcell` identifiers and filters for matches in the imported SampleSheet (**CRITICAL**)
 - Captures `filesize` and `mtime` for each valid FASTQ file
 
----
 
 #### 4. Merging FASTQ and SampleSheet Data
 - Combines FASTQ metadata with SampleSheet entries
 - Removes SampleSheet entries that lack corresponding FASTQ files
 
----
 
 #### 5. SQLite Database Construction
 - Database path: `@WD/assets/SampleSheets.sqlite`
@@ -248,68 +243,27 @@
   - If absent, creates the table
   - If present, appends new entries where `SampleID.Flowcell` is not already listed
 
----
 
 #### 6. Sample Selection for Processing
 - Queries samples with `Project_ID` matching any of:  
   `"NBS-NGS"`, `"NBS_NGS"`, `"nbs-ngs"` (**CRITICAL**)
 
----
 
 #### 7. Processed Sample Check
 - Skips samples where `SampleID_Flowcell.GATK.g.vcf.gz` already exists
-
----
 
 #### 8. Processing Prioritization
 - Prioritizes samples based on latest `mtime`
 - Excludes already processed samples
 - Limits selection to **11 samples max**
 
----
 
 #### 9. Outputs
 - `Sample.collection.info`: Existing samples from `SampleSheets.sqlite` with relevant `Project_ID`s
 - `ProcessedSamples.txt`: Sent via email upon successful completion
 - `ProcessingIDs.txt`: Input to downstream processes (`channel emit: alignment_tuple`)
 
-### COLLECTDATA [`collectdata.nf`]
-**Processes:** - `FINDDATA [finddata.nf]`  
-  - **Tool:** `R=4.3.1`  
-  - **Script:** `sqlsamplesheet.R`  
-		1. SampleSheets:
-			1. lokking for SampleSheet.csv in $WD (CRITICAL)
-			2. looking for CopyComplete.txt in $WD (CRITICAL)
-			3. collecting SampleSheets.csv with accompanying CopyComplete.txt (CRITICAL)
-		2. Imports SampleSheets:
-			1. SampleSheets gets imported if containing columns ["Sample_ID", "Sample_Name", "Sample_Project", "Description"] 
-			2. Checking if valid flowcell-ID with pattern: "[[:digit:]]{6}_[[:alpha:]]+[[:digit:]]+_[[:digit:]]+_[[:alnum:]]+" (CRITICAL)
-			3. Creaing uniqe ID of "SampleID" + "Flowcell" named "SampleID.Flowcell"
-			3. Removing observations with missing "SampleID"|"Flowcell"|duplicated(.)
-		3. Finding fastq.gz files.
-			1. Searching in paths from SampleSheet collection for "*fastq.gz" files
-			2. Creating "SampleID.Flowcell" ID and filter for existing "SampleID.Flowcell" in SampleSheet collection. (CRITICAL)
-			3. Collecting filesize and mtime for remaning fastq.gz files. 
-		4. Combining SampleSheet and Fastq.gz collections:
-			1. Combining fastq.gz, SampleSheet, fastq.gz size and mtime.
-			2. Removing SampleSheet collection observations with missing fastq.gz files. 
-		5. Creating sql-database in @WD/assets/SampleSheets.sqlite:
-			1. CHECK if "SAMPLESHEETS" table exists
-			2. IF NOT EXISTS create table "SAMPLESHEETS" 
-			3. IF EXISTS append "SampleID.Flowcell" that do not exists in the table. 
-		6. Finding "SampleID.Flowcell" for processing:
-			1. Extract * from SampleSheets.sqlite where Project_ID is "NBS-NGS", "NBS_NGS", "nbs-ngs" (CRITICAL)
-		7.Checking if samples are already processed:
-			1. Check if "SampleID_Flowcell".GATK.g.vcf.gz exists. 
-		8.Choosing samples for processing:
-			1. Latest samples (mtime) gets prioritized.
-			2. Filtering out SampleID_Flowcells with existing "SampleID_Flowcell".GATK.g.vcf.gz.
-			3. Limits the number of samples to be processed to 11. 
-		9.Exporting:
-			Sample.collection.info : Existing samples in SampleSheets.sqlite with Project_ID is "NBS-NGS", "NBS_NGS", "nbs-ngs"
-			ProssedSamples.txt : send by mail when process is succesfully finished. 
-			ProcessingIDs.txt : input to downstream processed. (- channel emit: alignemnt_tuple)
-			
+		
 Workflow: [main.nf]]
 - input: alignment_tuple
 -  channel: samples_for_alignment, unique_flowcells
