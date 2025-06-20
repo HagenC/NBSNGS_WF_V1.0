@@ -268,7 +268,7 @@
 
 - **Input:** `OPL_ch`  
 - **R Script:** `mtdnahaplogroup.R`
-- **Tool:** `R=4.3.1`, `haplogrep=2.4.0`
+- **Tools:** `R=4.3.1`, `haplogrep=2.4.0`
 
 ---
 
@@ -298,30 +298,17 @@
 
 ### Process: `SEX` [`sex.nf`]
 
-**Input:** `OPL_ch`, `bed`, `bed-padded`  
-**R Script:** `sexcheck.R`
+- **Input:** `OPL_ch`, `bed`  
+- **R Script:** `sexcheck.R`
+- **Tools:** `R=4.3.1`
 
----
-
-#### 1. Bed File Preparation
-- **Condition:** Does expanded BED file exist?
-  - **If FALSE:**  
-    - Imports original BED file  
-    - Expands it to `chr:pos` and saves as `bedFile_expanded.bed`
-  - **If TRUE:**  
-    - Loads `bedFile_expanded.bed`
-
----
-
-#### 2. Find Input Files
+#### 1. Find Input Files
 - Locates:
   - Coverage files: `/QC/*.cov.gz`
   - Existing sex prediction results: `/QC/*.predictedSex.txt`
 - Filters out already classified `SampleID_Flowcell`
 
----
-
-#### 3. Predicting Sex
+#### 2. Predicting Sex
 - **Condition:** Number of `chrX` coverage entries > 1
   - **If TRUE:**
     - Computes mean coverage of `chrX` and `chrY`
@@ -329,61 +316,83 @@
       - If `mean(chrX)/mean(chrY) < 3`, predict `"Male"`  
       - Else, predict `"Female"`
   - **If FALSE:**
-    - Creates default data frame:  
+    - Creates default data frame 
+
+
+### Process: `ANCESTRY` [`ancestrymodel.nf`]
+
+**Input:** `OPL_ch`  
+**R Script:** `ancestrymodel.R`  
+**Channel Emit:** `ANCESTRY.out`
+
+---
+
+#### 1. Extract Sample Metadata
+- Loads `SAMPLESHEETS` from SQLite:  
+  `/assets/SampleSheets.sqlite`
+- Filters for `Sample_Project` in:  
+  `"NBS-NGS"`, `"nbs-ngs"`, `"NBS_NGS"`
+
+---
+
+#### 2. Find Input Files
+- Existing results: `/QC/*.ancestryPrediction.txt`
+- New candidate VCFs: `/variants/*GATK.vcf.gz`  
+  - Filters out `SampleID_Flowcell` values already classified
+
+---
+
+#### 3. Ancestry Prediction
+
+##### Reference Data Imports:
+1. Selected RS IDs:  
+   `/assets/FeatureSelection_MDA4.txt`  
+   *(Q: How is this file generated?)*
+2. Reference VCF:  
+   `/assets/ancestry_reference_population.vcf`  
+   *(Q: How is this reference built?)*
+3. Reference metadata:  
+   `/assets/ReferenceData.tsv`  
+   *(Q: Source and preparation method?)*
+
+##### Sample Data:
+4. Imports target sample VCF  
+5. Computes `INFO`:  
+   - Count of variants in sample VCF that match reference RS IDs
+
+---
+
+#### 4. Classification Logic
+
+- **Condition:** `INFO > 100`
+  - **If TRUE:**
+    1. Genotypes (GT) are matched and converted to integers
+    2. Data is reshaped to long format
+    3. Reference metadata is subset to matching RS IDs
+    4. Splits data: 80% train / 20% test
+    5. Trains `randomForest` model, tests on held-out data
+    6. Predicts ancestry for the sample
+    7. Reports:
+       - If prediction probability < 0.6 → **Top 2 predictions**
+       - Else → **Top 1 prediction**
+       
+  - **If FALSE:**
+    - Returns default placeholder:
       ```r
-      data.frame(chrX = 0, chrY = 0) %>%
-        mutate(SampleID_Flowcell = DB$SampleID_Flowcell[i]) %>%
-        mutate(XY.ratio = chrX / chrY) %>%
-        mutate(Sex.prediction = ifelse(XY.ratio < 3, "Male", "Female")) %>%
-        mutate(Sex.prediction = ifelse(is.na(Sex.prediction), "Insufficient data", Sex.prediction))
+      data.frame(
+        SampleID_Flowcell = VCF_list$SampleID_Flowcell[i],
+        Ancestry = "Insufficient data",
+        Probability = 0,
+        Info = 0,
+        Accuracy = 0
+      )
       ```
 
 ---
 
-Let me know if you'd like me to break any sections into tables or add code blocks for better readability!
+Let me know if you'd like a version with tables, diagrams, or callouts for key thresholds like `INFO > 100` or `probability < 0.6`.
 
-### Process: `MTDNA_HAPLOGROUP` [`mtdna_haplogroup.nf`]
-**Input:** `OPL_ch`  
-**R Script:** `mtdnahaplogroup.R`
 
-1. **Search existing results**
-   - Find all `*.mtDNAhg_classified.txt` files in `/QC/`
-
-2. **Filter new samples**
-   - Search for `*.GATK.OPL.vcf` in `/variants/`
-   - Exclude `SampleID_Flowcell` values that already have a classification file
-
-3. **Predict mtDNA haplogroup**
-- process: MTDNA_HAPLOGROUP [mtdna_haplogroup.nf]; input:  OPL_ch
-	-mtdnahaplogroup.R:
-		1. Finding existing "/QC/" *.mtDNAhg_classified.txt"
-		2. Finding OPLs in "/variants" - "*.GATK.OPL.vcf$" and filtering out existing SampleID_Flowcell from step 1. 
-		3. Predicting mtDNA haplogroup:
-			1. Conditional: Checking if "chrM" exists in OPL 
-				1. TRUE: Importing OPL CHROM = "chrM" and extracting GT == "1/1"
-				2.Creating "QC" - mean DP and variant count. 
-				3. Conditional: Checking if number of variants in step 1 is > 1.
-					1.Filter for SNPs and creating posAlt variable.
-					2. Writing out step 1.
-					3. Using haplogrep3 to predict "classify --tree=phylotree-rcrs@17.2"
-					4. Adding "QC" to prediction and changign predicted Haplogroup to "Insufficient coverage" if mean DP is < 20. 
-				2.FALSE: Creating with data.frame(SampleID = OPL$SampleID_Flowcell[i], Haplogroup = "Insufficient data", Rank = 0, Quality = 0, Range = 0-0, Major = "-", 
-                                    PredictedAncestry = "-",  Mean.DP = 0,  n = 0)
-		4. OUTPUT: "/QC/" *.mtDNAhg_classified.txt"
-- process: SEX [sex.nf]; input: OPL_ch, bed, bed-padded.
-	-sexchech.R:
-		1. Conditional: if(file.exists(paste0(nxf_work_dir,"/assets/bedFile_expanded.bed"))== "FALSE")
-			FALSE: Import bed-file and expand to chr:pos to make expanded-bed-file.
-			TRUE: import expanded-bed-file.
-		2.FIND files:
-			1. COVERAGE "/QC/"  "*.cov.gz$
-			2. SEX "/QC/" *.predictedSex.txt" filtering out SampleID_Flowcell in step 1. 
-		2. Predicting sex:
-			1. Conditional number of lines in COVERAGE CHROM == chrX
-				1. >1 mean of chrX and chrY  if ratio of mean chrX/chrY < 3 = male else female. 
-				2. < 1 creating data.frame data.frame(chrX = 0, chrY = 0)%>% mutate( SampleID_Flowcell = DB$SampleID_Flowcell[i]) %>% 
-					mutate(XY.ratio = chrX/chrY) %>% mutate(Sex.prediction = ifelse(XY.ratio < 3, "Male", "Female")) %>% 
-					mutate(Sex.prediction = ifelse(is.na(Sex.prediction), "Insufficent data", Sex.prediction))
 - process: ANCESTRY [ancestrymodel.nf]; input: OPL_ch
 	- ancestrymodel.R 
 		1.Extract SAMPLESHEETS from "/assets/SampleSheets.sqlite"
