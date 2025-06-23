@@ -142,7 +142,7 @@ workflow.onComplete {
         """
         .stripIndent()
          
-        sendMail(subject: "NBSNGS WF v.1.0 sucecesfully completed", body:  msg ,  attach: "./assets/temp/ProcessedSamples.txt", to: 'unc@ssi.dk')
+        sendMail(subject: "NBSNGS WF v.1.0 successfully completed", body:  msg ,  attach: "./assets/temp/ProcessedSamples.txt", to: 'unc@ssi.dk')
 
 //Delete workdir:
 
