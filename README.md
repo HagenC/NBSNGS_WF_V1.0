@@ -126,7 +126,8 @@ NBSNGS_WF_V1.0 instructions:
  - **Ancestry reference data**:  
   [1000genomes](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
 
-
+- **xGen™ Exome Hybridization Panel**:
+  [target bed file](https://sfvideo.blob.core.windows.net/sitefinity/docs/default-source/supplementary-product-info/xgen-exome-hyb-panel-v2-targets-manifest-hg38.txt?sfvrsn=b6c0e207_2)
 
 
 
