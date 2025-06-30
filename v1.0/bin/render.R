@@ -6,9 +6,10 @@ VOI_DB_path <- args[2]
 VOI_DB_PHENOTYPE_path <- args[3]
 version = args[4]
 
-#nxf_work_dir <-  "/srv/data/ILMN/PIPELINES/NBSNGS_WF_v1.0/v1.0/"
+#nxf_work_dir <-  "~/TEST_TMP/ALT_test/NBSNGS_WF/v1.0/"
 #version <- "v.1.0"
-#VOI_DB_path <- "/srv/data/ILMN/PIPELINES/NBSNGS_WF_v1.0/v1.0/assets/temp/VOI_DB"
+#VOI_DB_path <- "~/TEST_TMP/ALT_test/NBSNGS_WF/v1.0/assets/temp/VOI_DB"
+#VOI_DB_PHENOTYPE_path <- "~/TEST_TMP/ALT_test/NBSNGS_WF/v1.0/assets/temp/VOI_DB_PHENOTYPE"
 source(paste0(nxf_work_dir,"/bin/dependencies.R"))
 
 
@@ -48,7 +49,7 @@ FOUNDER_VARIANTS <- fread(paste0(nxf_work_dir, "/assets/phenotype/FounderVariant
 }
 VOI_DB_import <- fread(VOI_DB_path) %>% select(-GENE)
 
-#i <- 33
+#i <- 1
 print(paste0("Processing ", nrow(SAMPLES_FOR_REPORTING), " samples:"))
 if(nrow(SAMPLES_FOR_REPORTING) > 0){
 for(i in 1:nrow(SAMPLES_FOR_REPORTING)){
@@ -69,14 +70,25 @@ con <- dbConnect(RSQLite::SQLite(), dbname = paste0(nxf_work_dir , "/assets/sql/
 effect_like_sql<- paste0("EFFECT LIKE '%", keep.SnpEff.EFFECTs, "%'", collapse = " OR ")
 GENE_filter_SQLformat <- paste0("'", paste(PHENOTYPE.GENES, collapse = "','"), "'")
 
- query_opl <- paste0("SELECT *  FROM OPL WHERE SampleID_Flowcell =  '",targetSampleID,"'")
+
  query_opl <- paste0("
     SELECT *  FROM OPL WHERE SampleID_Flowcell =  '",targetSampleID,"'
     AND ((", effect_like_sql, ") OR CLNSIG LIKE '%pathogen%')
-    AND (CLNSIG NOT IN ('Benign', 'Benign/Likely_benign', 'Likely_benign') OR CLNSIG IS NULL)
+    AND (CLNSIG NOT IN ('Benign', 'Benign/Likely_benign', 'Likely_benign','Benign|other', 'Benign/Likely_benign|other') OR CLNSIG IS NULL)
     AND GENE in (",GENE_filter_SQLformat,") ")
 OPL_VOIS <- dbGetQuery(con, query_opl)  %>% unite(VARID, c(CHROM, POS, REF, ALT), sep = "-", remove = FALSE) %>% replace_na(list(AF_nfe = 0))  %>%
   mutate(Pathogenic = grepl( "Pathogenic|Likely_pathogenic", CLNSIG)) %>% filter(AF_nfe < 0.01 | Pathogenic == "TRUE")   %>% select(-Pathogenic)
+
+#Alt:
+query_alt <- paste0("
+    SELECT *  FROM OPL WHERE SampleID_Flowcell =  '",targetSampleID,"'
+    AND ((", effect_like_sql, ") OR CLNSIG LIKE '%pathogen%')
+    AND (CLNSIG NOT IN ('Benign', 'Benign/Likely_benign', 'Likely_benign','Benign|other', 'Benign/Likely_benign|other') OR CLNSIG IS NULL) 
+    AND GENE NOT IN (",GENE_filter_SQLformat,") ")
+ALT_phenotype <- dbGetQuery(con, query_alt) %>% unite(VARID, c(CHROM, POS, REF, ALT), sep = "-", remove = FALSE) %>% replace_na(list(AF_nfe = 0))  %>%
+  mutate(Pathogenic = grepl( "Pathogenic|Likely_pathogenic", CLNSIG)) %>% filter(AF_nfe < 0.01 | Pathogenic == "TRUE")   %>% select(-Pathogenic) %>%  
+  left_join(., Phenotype.gene.list , by = c("GENE" = "Gene.ID")) %>% arrange(Phenotype) %>%  summarise(Phenotype = paste(Phenotype, collapse = ";"))
+
 
 
   
@@ -200,7 +212,8 @@ params_list = list(
   Sex = SEX_targetSampleID, 
   mtDNA = mtDNA_haplogroup,
   ancestry = Ancestry_predict,
-  Version = version
+  Version = version,
+  OBS = ALT_phenotype
 )
 
 # Render the report
